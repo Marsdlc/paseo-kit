@@ -37,19 +37,19 @@ export const claudeDark: ThemeInput = {
   name: "Claude 暗色",
   appearance: "dark",
   colors: {
-    background: "#262624", // warm charcoal canvas
-    foreground: "#F5F4EE", // ivory text
-    raised: "#30302E", // cards, composer, popovers
-    control: "#393937",
-    border: "#42413D",
-    accent: "#D97757", // clay
-    mutedForeground: "#A8A69D",
-    ring: "#D97757",
-    sidebar: "#1F1E1D",
-    sidebarHover: "#2A2A27",
-    sidebarSelected: "#34332F",
-    surface3: "#3E3D3A",
-    surface4: "#4A4945",
-    foregroundExtraMuted: "#7E7C75",
+    background: "#2E2D2A", // warm charcoal canvas
+    foreground: "#FAF9F5", // ivory text
+    raised: "#393835", // cards, composer, popovers
+    control: "#42413D",
+    border: "#4D4C47",
+    accent: "#E08A6A", // clay
+    mutedForeground: "#BDBAB0",
+    ring: "#E08A6A",
+    sidebar: "#272623",
+    sidebarHover: "#33322F",
+    sidebarSelected: "#3E3D39",
+    surface3: "#484743",
+    surface4: "#55544F",
+    foregroundExtraMuted: "#918F86",
   },
 };

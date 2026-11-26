@@ -16,12 +16,12 @@ paseo plugin install github:Marsdlc/paseo-kit:plugins/claude-theme
 
 | | Claude 亮色 | Claude 暗色 |
 | --- | --- | --- |
-| 主背景 | `#FAF9F5` | `#262624` |
-| 卡片 / 输入框 | `#FFFFFF` | `#30302E` |
-| 侧边栏 | `#F3F1EA` | `#1F1E1D` |
-| 正文 | `#141413` | `#F5F4EE` |
-| 次要文字 | `#6B6A64` | `#A8A69D` |
-| 强调色 | `#C96442` | `#D97757` |
+| 主背景 | `#FAF9F5` | `#2E2D2A` |
+| 卡片 / 输入框 | `#FFFFFF` | `#393835` |
+| 侧边栏 | `#F3F1EA` | `#272623` |
+| 正文 | `#141413` | `#FAF9F5` |
+| 次要文字 | `#6B6A64` | `#BDBAB0` |
+| 强调色 | `#C96442` | `#E08A6A` |
 
 配色定义在 [`client/palettes.ts`](client/palettes.ts)。
 
