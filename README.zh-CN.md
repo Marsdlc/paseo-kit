@@ -1,206 +1,64 @@
 # paseo-kit
 
-[English](README.md) | 简体中文
+简体中文 | [English](README.md)
 
 [![License: Apache-2.0](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](LICENSE)
 
-[Paseo](https://paseo.sh) 插件合集。每个插件位于 `plugins/<id>/`，是一个完整、独立的 Paseo 插件项目。
+面向 [Paseo](https://paseo.sh) 的终端风格汉化插件仓库，仅保留 [`ccusage-stats`](plugins/ccusage-stats)（Token 用量统计）。
 
-## 插件
+## 插件功能
 
-| ID | 名称 | 功能 |
-| --- | --- | --- |
-| [`host-monitor`](plugins/host-monitor) | Host monitor | 在侧边栏底部显示 daemon 主机的 CPU、内存、磁盘和网速，点击查看历史曲线。 |
-| [`ccusage-stats`](plugins/ccusage-stats) | Token usage | 基于 [ccusage](https://github.com/ccusage/ccusage) 统计编码 agent 的 token 消耗与估算费用：今日总量、按日/周/月分 agent 分析、当前 session 消耗，以及可选的 Claude 订阅额度。 |
-| [`file-download`](plugins/file-download) | Download file | 用 Cmd+S 或 Ctrl+S 下载当前预览的文件，包括 `/tmp` 等工作区外的文件。 |
-| [`tab-recovery`](plugins/tab-recovery) | Closed agents | 列出当前工作区里被关闭（即被归档）的 agent，一键重新打开。 |
-| [`media-studio`](plugins/media-studio) | Media studio | 审看 agent 产出的图片、视频和音频：对话内卡片、带胶片条和波形时间线的流式播放器、带时间码的批注回传给 agent、大文件上传下载、支持 SSH 远程主机上的文件。 |
-
-### host-monitor
-
-- 侧边栏底部一行：CPU、内存、磁盘百分比与小进度条，以及共用一个图标的下载 / 上传速度。
-- 超过 70% 变黄，超过 90% 变红；侧边栏较窄时先隐藏网速，再隐藏磁盘。
-- 弹出层展示每项指标约三分钟的历史、每块本地磁盘的用量、运行时间和负载。
-- daemon 每 2 秒采样一次，历史保存在内存中。网速仅支持 Linux。
-
-### ccusage-stats
-
-- 侧边栏底部一行：今日 token 总量、对比典型一天费用（近 28 天活跃日的中位数）的进度条、估算费用。
-- 弹出层：日 / 周 / 月总量、与上一周期的对比、堆叠柱状图；日视图另附典型一天与日均消耗。
-- 完整的 **Token usage** 页面（也可从 Command Center 打开）：30 天 / 12 周 / 12 个月历史、每百万 token 成本、缓存命中率、按 agent 和模型拆分、最近的 session。
-- 每个 agent 的输入框上方有一个 pill，显示当前 provider session 的 token 总量。
-- 统计 ccusage 支持的所有 agent（Claude Code、Codex、Gemini CLI、OpenCode、Amp 等）。费用为按 API 标价离线估算，不向外发送任何数据。
-- 可选、默认关闭：Claude 订阅额度（5 小时窗口和每周窗口），显示在侧边栏、弹出层和 Details 页。在插件设置里开启后，daemon 会在其主机上执行 Claude Code 自带的 `/usage`（最多每 5 分钟一次，且只在有 Paseo 界面打开时）；使用 `claude setup-token` 的 token 时，会通过系统 `script` 命令开一个交互式 Claude Code 会话读取 `/usage`。数据由 Claude Code 用它自己的登录去获取，插件不读取 Claude token，自身也不发任何网络请求。
-
-### file-download
-
-- 在 macOS 上按 Cmd+S、在 Windows 和 Linux 上按 Ctrl+S，下载当前正在预览的文件，`/tmp` 等工作区外的文件也可以。命令面板里的 "Download current file" 效果相同。
-- 当前聚焦的不是文件（比如 agent 页面）时，快捷键什么都不做。光标在 Paseo 的文件编辑器里时，快捷键仍然是保存修改。
-- 命令面板里的 "Open downloads" 列出本页面加载以来的下载记录；插件不会主动发现或列出文件。
-- 文件按 4 MB 分块经 Paseo 连接传输，经中转或反向代理也能用。单个文件上限 1 GB。仅支持桌面版和网页端。
-
-### tab-recovery
-
-- 关闭 agent 标签页会归档该 agent。**Closed agents** 面板按关闭时间倒序列出本工作区被归档的主 agent。
-- 点 Reopen 会解除归档、恢复会话并重新打开标签，与已归档 agent 标签里的 Unarchive 按钮效果相同。daemon 端通过 `paseo agent reload` 实现，所以 daemon 的 PATH 中需要有 `paseo` CLI。
-
-### media-studio
-
-- 给 agent 提供 `preview_media` 工具：渲染、剪辑、截帧或混音后，直接在对话里以带播放器的卡片展示。每轮结束后，在回复下方追加一张卡片，汇总本轮展示过的媒体以及新增或修改的媒体文件。
-- 播放器从 daemon 流式拉取，大文件约 1 秒起播，拖动即时跳转。H.264 直接播放原片，其他格式实时转成 720p 代理（可用时走 VideoToolbox 或 NVENC 硬件编码）。时间线带时间码、胶片条、波形、悬停预览帧、逐帧步进、入出点、循环和剪辑常用快捷键。
-- 长 GOP 成片约 1 秒跳转：从播放头到下一个关键帧的一小段实时近无损重编，之后接回原片。
-- 剪辑工具：按文件记住播放位置、入出点和倍速（切 tab、刷新、重渲染后都能接着看），输入时间码跳转，两个版本在同一时间点来回对比，安全框和 9:16 / 4:5 / 1:1 裁切参考线，EBU R128 响度与真峰值检查（对照 −14 LUFS）。
-- 批注发给 agent 时附带文件、时间码、入出点区间，以及当前画面（作为图片）；agent 工作中也能发（并入当前任务、不打断）；批注列在播放器旁并标在时间线上，可一键复制成带时间码的清单。
-- **媒体**面板：最近媒体或按文件夹浏览，按钮或拖拽上传，大文件下载边收边写盘。传输以 4 MB 分块走 Paseo 连接，直连、反向代理和隧道都可用，不需要额外端口。
-- SSH 主机上的文件（`别名:/路径`，别名取自 `~/.ssh/config`）由该主机的 ffmpeg 处理，适合 agent 在 GPU 服务器上渲染的场景。
-- 需要 daemon 主机安装 ffmpeg，Paseo 0.15.3 及以上。播放和上传需要桌面端或浏览器。
-
-详细说明与限制见各插件的 `OVERVIEW.md`。
+- **终端 / TUI 视觉风格**：全量汉化界面、等宽数字对齐、1px 锐利直角边框与终端提示符标题栏，自动适配 Paseo 明暗主题及移动端紧凑布局。
+- **侧边栏底栏**：一行展示今日 Token 总量、对比典型日（近 28 天活跃日中位数）的进度仪表以及估算费用。
+- **弹出层**：日 / 周 / 月总量、与上一周期的同比变化、直角堆叠柱状图；日视图另附典型日基准与日均 / 折合月均消耗。
+- **完整「Token 用量」页面**（支持命令面板打开）：30 天 / 12 周 / 12 个月历史趋势、每百万 Token 成本、缓存命中率、输入/输出/缓存构成、可展开的按 Agent 与模型明细，以及最近会话记录。
+- **会话用量胶囊与面板**：每个 Agent 输入框上方显示当前会话 Token 总量，点击可查看主对话、子任务 Agent、Paseo 子 Agent 及模型明细表。
+- **主流 AI 品牌配色**：
+  - Claude Code：`#D97757`（陶土橘）
+  - Codex：`#10A37F`（翡翠绿）
+  - Antigravity：`#4285F4`（科技蓝）
+  - Gemini CLI：`#8E75FF`（蓝紫）
+- **完全离线统计**：内置 `ccusage`（`20.1.2`）直接读取本机日志并按内置 API 标价估算，不向外发送任何数据。
 
 ## 环境要求
 
-- Paseo **0.11.1** 及以上（daemon 和 app）；`media-studio` 需要 **0.15.3** 及以上。
-- daemon 已开启插件：**Settings → Plugins → Enable plugins**，或在 daemon 的 `config.json` 中设置 `"pluginsEnabled": true` 后执行 `paseo reload`。
-- daemon 主机上有 Node.js 和 npm（用于安装依赖）。
-
-## 依赖
-
-本仓库不内嵌任何第三方代码。依赖在各插件的 `plugins/<id>/package.json` 中声明，并由提交的 `package-lock.json` 锁定版本。
-
-**运行环境**
-
-| 依赖 | 版本 | 说明 |
-| --- | --- | --- |
-| [Paseo](https://github.com/getpaseo/paseo) daemon 与 app | >= 0.11.1 | 在各 `paseo-plugin.json` 的 `requirements.paseo` 中声明。 |
-| Node.js 与 npm | 建议 Node 22+ | 位于 daemon 主机，用于安装依赖和执行 `ccusage-stats` 的 build 步骤。 |
-| `paseo` CLI | 与 daemon 相同 | 需在 daemon 的 PATH 中，`tab-recovery` 用它恢复 agent。标准安装自带。 |
-| Linux `/proc` | - | `host-monitor` 的网速、可用内存与磁盘列表。其他系统只显示 CPU、内存和根分区。 |
-| ffmpeg（ffprobe 可选） | 建议 6 及以上 | `media-studio` 需要，位于 daemon 主机，需含 libx264；预览 SSH 主机上的文件时，该主机也需要。 |
-| `ssh` 客户端 | - | 仅 `media-studio` 预览 SSH 主机文件时需要，密钥需免交互登录。 |
-
-**运行时 npm 依赖**（随插件安装）
-
-| 包 | 版本 | 许可证 | 使用者 |
-| --- | --- | --- | --- |
-| [`ccusage`](https://github.com/ccusage/ccusage) | 20.0.29 | MIT | `ccusage-stats` |
-| `@ccusage/ccusage-<platform>-<arch>` | 20.0.29 | MIT | `ccusage-stats`（原生二进制，`ccusage` 的可选依赖） |
-
-`host-monitor`、`file-download`、`tab-recovery` 和 `media-studio` 没有运行时 npm 依赖。
-
-**运行时由 Paseo 提供**（列在 `devDependencies` 中，本地安装仅用于类型检查）
-
-| 包 | 版本 | 许可证 |
-| --- | --- | --- |
-| [`@getpaseo/plugin`](https://github.com/getpaseo/paseo) | 0.11.1（`media-studio`：0.15.3） | Apache-2.0（Paseo） |
-| `react` | 19.1.0 | MIT |
-| `react-native` | 0.81.5 | MIT |
-| `@tanstack/react-query` | ^5.90.11 | MIT |
-| `zod` | ^4.4.3 | MIT |
-
-**仅开发使用**
-
-| 包 | 版本 | 许可证 |
-| --- | --- | --- |
-| `typescript` | ^5.9.3 | Apache-2.0 |
-| `@types/node` | ^22.0.0 | MIT |
-| `@types/react` | ~19.2.0 | MIT |
+- Paseo **0.11.1** 及以上（daemon 与 app）。
+- daemon 已开启插件（**Settings → Plugins → Enable plugins**）。
+- daemon 主机已安装 Node.js 与 npm（用于安装内置 `ccusage` 依赖）。
 
 ## 安装
 
-### 让 Agent 安装
-
-把下面这段提示词复制给运行在目标机器上的 Paseo agent，它会从 GitHub 安装或更新全部插件。只想装其中几个时，把第 3 步里其他 ID 删掉即可。
-
-```text
-请在本机的 Paseo daemon 上安装 https://github.com/a31521424/paseo-kit 中的 Paseo 插件。全程不要重启 Paseo daemon，否则会杀掉正在运行的 agent。
-1. 执行 `paseo --version`，版本必须 ≥ 0.11.1。执行 `npm --version`，npm 必须在 daemon 的 PATH 中，因为 ccusage-stats 安装时会执行 `npm ci --omit=dev`。
-2. 从 `paseo daemon status --json` 取得 `home`，读取 `<home>/config.json` 中的 `pluginsEnabled`（缺失视为 false）。如果不是 true，先停下来征求我的同意，并提醒我：插件是受信任、无沙箱的代码，可以访问这台机器。我同意后，只把该字段设为 true，保留文件其余内容，然后执行 `paseo reload --json`。
-3. 执行 `paseo plugin ls`。对 `host-monitor`、`ccusage-stats`、`file-download`、`tab-recovery` 和 `media-studio` 每个 ID 分别处理：未安装则执行 `paseo plugin install github:a31521424/paseo-kit:plugins/<id>`；SOURCE 已经是本 GitHub 仓库则执行 `paseo plugin update <id> --yes`；从其他来源安装的，先问我再决定是否删除重装。
-4. 执行 `paseo plugin ls`，每个插件都必须是 `running` 且没有错误。失败时把错误信息和 `paseo plugin logs <id>` 的输出给我。
-5. 汇报每个插件的 SOURCE 和 REVISION。
-```
-
-### 从 GitHub 安装
+### 从 GitHub 安装（推荐）
 
 ```bash
-paseo plugin install github:a31521424/paseo-kit:plugins/host-monitor
-paseo plugin install github:a31521424/paseo-kit:plugins/ccusage-stats
-paseo plugin install github:a31521424/paseo-kit:plugins/file-download
-paseo plugin install github:a31521424/paseo-kit:plugins/tab-recovery
-paseo plugin install github:a31521424/paseo-kit:plugins/media-studio
+paseo plugin install github:Marsdlc/paseo-kit:plugins/ccusage-stats
 ```
 
-`ccusage-stats` 在 manifest 中声明了 `build: [["npm", "ci", "--omit=dev"]]`，Paseo 会按锁文件安装内置的 ccusage 二进制。其他插件只用 Paseo 提供的库。之后用 `paseo plugin update <id>` 更新。
+后续更新：
+
+```bash
+paseo plugin update ccusage-stats
+```
 
 ### 从本地克隆安装
 
 ```bash
-git clone https://github.com/a31521424/paseo-kit.git
+git clone https://github.com/Marsdlc/paseo-kit.git
 cd paseo-kit
 npm run install:all
-
-paseo plugin install "$PWD/plugins/host-monitor"
 paseo plugin install "$PWD/plugins/ccusage-stats"
-paseo plugin install "$PWD/plugins/file-download"
-paseo plugin install "$PWD/plugins/tab-recovery"
-paseo plugin install "$PWD/plugins/media-studio"
 paseo plugin ls
 ```
-
-目录插件直接从源码目录加载。移动仓库位置后，需要先 `paseo plugin remove <id>`，再按新的绝对路径重新安装。
 
 ## 开发流程
 
 ```bash
-npm run typecheck              # 检查全部插件；也可在 plugins/<id> 内单独执行
-paseo plugin reload <id>       # 加载源码改动
-paseo plugin ls                # 状态应为 running 且无错误
-paseo plugin logs <id>         # 查看插件 daemon 子进程的输出
+npm run typecheck
+paseo plugin reload ccusage-stats
+paseo plugin ls
+paseo plugin logs ccusage-stats
 ```
-
-不要为了加载插件改动而重启 daemon。`paseo plugin reload <id>` 即可，重启会杀掉正在运行的 agent。
-
-客户端代码需同时适配桌面端和移动端：只用 React Native 原生组件，文字颜色取自 `theme.colors`，间距根据 `layout.compact` 调整。用下面的命令审计：
-
-```bash
-rg -n "document\.|window\.|localStorage|navigator\.|<[a-z]+[ >]|className=|onClick=" plugins/*/client/
-```
-
-`useState<number | null>` 这类 TypeScript 泛型也会命中，可忽略；`client/web.ts` 以外的其他命中都是 bug。
-
-### 目录结构
-
-```text
-paseo-kit/
-  package.json            仅含根脚本：install:all、typecheck
-  plugins/
-    <id>/
-      paseo-plugin.json   manifest：id、name、description、requirements.paseo
-      OVERVIEW.md         Paseo 内展示的插件介绍页
-      package.json
-      package-lock.json
-      tsconfig.json
-      index.client.tsx    app 入口
-      index.server.ts     daemon 入口
-      client/  server/  shared/
-```
-
-本仓库刻意**不使用** npm workspaces，每个插件在 `plugins/<id>/node_modules` 中独立安装依赖。`ccusage-stats` 会在自身插件目录下查找 ccusage 原生二进制，依赖提升到根目录会导致找不到。
-
-### 新增插件
-
-```bash
-paseo plugin init "$PWD/plugins/<id>"
-cd plugins/<id>
-npm install
-```
-
-然后与现有插件对齐：相同的 `@getpaseo/plugin` 版本和 `requirements.paseo` 范围、相同的 `tsconfig.json`、`package.json` 的 `name` 与 ID 一致，并写一份如实的 `OVERVIEW.md`。最后把它加到上方插件表和 `.github/workflows/typecheck.yml` 的 CI 矩阵中。
-
-## 信任与安全
-
-Paseo 插件是**受信任、无沙箱**的代码。服务端代码作为 daemon 子进程运行，可完全访问 daemon 主机的文件、进程、凭据和网络；客户端代码运行在 Paseo app 内。安装任何插件（包括本仓库的插件）前请先阅读源码。不要提交凭据，也不要在插件代码中打印凭据。
 
 ## 许可证
 
-采用 [Apache License 2.0](LICENSE)，与 [Paseo](https://github.com/getpaseo/paseo) 一致，另见 [NOTICE](NOTICE)。第三方依赖遵循各自的许可证，见上方[依赖](#依赖)一节。
+采用 [Apache License 2.0](LICENSE)，另见 [NOTICE](NOTICE)。

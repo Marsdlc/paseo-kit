@@ -16,12 +16,6 @@ import {
   formatTokens,
   shortSessionId,
 } from "./format";
-import {
-  ClaudeLimitsOffNote,
-  ClaudeLimitsSection,
-  LimitsRefreshButton,
-  useClaudeLimits,
-} from "./limits";
 import { AgentList, Composition, FONT, Headline } from "./summary";
 import { MONO_TEXT } from "./terminal";
 
@@ -318,8 +312,6 @@ function Body({
         </View>
       ) : null}
 
-      <LimitsCard theme={theme} />
-
       <Card theme={theme} title="Token 趋势">
         <Headline
           theme={theme}
@@ -384,19 +376,7 @@ function Body({
       <Text style={[MONO_TEXT, { fontSize: FONT.caption, color: theme.colors.foregroundMuted }]}>
         # 数据由 ccusage 从本机 Agent 日志离线读取，费用按内置 API 标价估算，并非实际账单。
       </Text>
-      <ClaudeLimitsOffNote theme={theme} />
     </View>
-  );
-}
-
-/** Claude plan limits, only once they are turned on in the settings. */
-function LimitsCard({ theme }: { theme: PluginTheme }) {
-  const { data } = useClaudeLimits();
-  if (!data?.enabled) return null;
-  return (
-    <Card theme={theme} title="Claude 订阅额度" trailing={<LimitsRefreshButton theme={theme} />}>
-      <ClaudeLimitsSection theme={theme} />
-    </Card>
   );
 }
 

@@ -1,8 +1,0 @@
-{
-  "id": "tab-recovery",
-  "name": "关闭标签恢复",
-  "description": "以终端风格列表查看当前工作区已关闭（归档）的 Agent，一键恢复会话与标签页",
-  "requirements": {
-    "paseo": ">=0.11.1"
-  }
-}

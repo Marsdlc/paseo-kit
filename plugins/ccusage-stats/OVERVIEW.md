@@ -1,38 +1,17 @@
-Shows how many tokens your coding agents use on the machine the Paseo daemon runs on, and what that usage would cost at API prices. Numbers come from [ccusage](https://github.com/ccusage/ccusage), which reads the agents' local session logs. Claude Code, Codex, Gemini CLI, Copilot CLI, OpenCode, Antigravity, Grok Build, Amp, Pi and the other agents ccusage supports are counted together.
+在 Paseo 中以终端风格展示本机编码 Agent 的 Token 消耗与估算费用。数据来自内置的 [ccusage](https://github.com/ccusage/ccusage)，离线读取本机 Agent 会话日志，合并统计 Claude Code、Codex、Antigravity、Gemini CLI、OpenCode、Amp 等支持的 Agent。
 
-## Where it appears
+## 展示位置
 
-A line in the sidebar footer, styled like the built-in usage summary, shows today's total tokens, a small meter and today's estimated cost. The meter compares today's estimated cost, split by agent, with a tick that marks a typical day: the median cost of the active days in the last 28, with idle days skipped. The median keeps a single very heavy day, or a day with one prompt, from moving the tick far. Cost is used rather than tokens because cache reads make up most of the token count while costing next to nothing. The tick sits mid-track, so a half-full meter means a typical day; past double the typical day the track stretches and the tick slides left. Today is compared as it stands, so the meter fills over the course of the day. With no usage in the last 28 days, the typical day defaults to about $78, which is 20% of the monthly API-equivalent value of a $200 Claude Max 20x plan on Opus 5.5 (about $11,726) as measured by SemiAnalysis in October 2026 ([summary](https://www.explainx.ai/blog/semianalysis-claude-vs-chatgpt-subscription-api-value-limit-testing-2026)), spread over 30 days. The tick is muted while the default is in use. The popover's day view states the typical day in numbers, together with the average cost per day: everything spent since the first active day in the window, idle days included, divided by the days since then, and that average over 30 days. The average is what usage costs over time, the figure to hold against a plan's price; the typical day is what a working day looks like. On a narrow sidebar the bar and then the cost are dropped.
+侧边栏底栏单行显示今日总 Token、对比典型日（近 28 天活跃日中位数）的费用进度仪表以及今日估算费用。点击可展开弹出层，支持按日 / 周 / 月切换总量、与上一周期的同比变化及堆叠柱状图，日视图同时列出典型日基准与日均 / 折合月均消耗。点击「详情」或从命令面板执行「打开 Token 用量面板」可进入完整页面，查看 30 天 / 12 周 / 12 个月历史、每百万 Token 成本、缓存命中率、输入/输出/缓存构成、可展开的按 Agent 与模型明细及最近会话。
 
-Press the line for a popover. Switch between day, week and month to see the current period's total, the change against the previous one, and a stacked column chart of recent periods. Press a column to inspect that period. Below the chart, each agent's tokens, share and cost are listed. **Details** opens a full screen with longer history (30 days, 12 weeks or 12 months), cost per million tokens, cache hit rate, the input, output and cache split, a per-agent list that expands into models, and the most recent sessions. The screen is also in the Command Center as **Open token usage**.
+每个 Agent 输入框上方提供会话用量胶囊，点击或从命令面板执行「打开当前会话用量」可进入「会话用量」面板，查看主对话、子任务 Agent、通过 Paseo 启动的子 Agent 以及按模型拆分的消耗明细。
 
-Each agent's composer gets a pill with the token total of that agent's conversation. Press it, or run **Open session usage** from the Command Center, to open the **Session usage** panel: cost, tokens, cache hit rate and the input, output and cache split; where the cost went, split into the main conversation, each Claude Code subagent (Task agents such as Explore, with their description, model, tokens and cost) and the agents this agent started through Paseo; and a per-model table. On a wide panel the cards sit side by side and the model table shows every token column. The pill stays hidden until ccusage has recorded usage for the session, so agents ccusage cannot read show no pill.
+## 会话匹配方式
 
-## How sessions are matched
+插件依据 Paseo 记录的 provider 会话 ID（Claude Code 会话 UUID、Codex rollout 线程 ID 等）精准匹配单次会话；对 Claude Code 恢复或分叉产生的历史会话链会自动回溯汇总，并将子任务 Agent 与 Paseo 子 Agent 区分统计，避免重复计算。
 
-Paseo stores each agent's provider session id. For Claude Code this is the session id ccusage reports; for Codex it is the thread id at the end of ccusage's rollout name. The plugin matches on that id exactly, so a session pill never mixes in other sessions from the same folder. Other providers match when their ccusage session id is the provider session id. An agent that has not started a provider session yet shows no pill. When an agent is resumed into a new provider session, the pill follows the new session.
+## 刷新与限制
 
-Resuming or forking a Claude Code session starts a new log that names the session it came from. ccusage counts each message once, so history and subagents from before the resume stay booked under the older session. The plugin follows that chain back and adds every earlier session of the conversation, so the pill and panel cover the whole conversation, not only the latest segment; the panel says how many earlier sessions are included. Claude Code subagents are part of the session total. Agents started through Paseo (`paseo run`, or from another agent) have their own sessions and pills; the parent's panel lists them and shows a total with them, but never adds them to the parent's own numbers, and history a child forked from its parent is counted only once. Closed and archived children are included. Paseo stops listing an agent once its project is removed; the plugin then reads the daemon's agent records on the same host, so those children still count and are marked "project removed".
+守护进程统一运行一次 ccusage 并将结果缓存 1 分钟；当 Agent 完成一轮对话且近期有人查看过统计时，会在数秒后后台刷新。ccusage 二进制随插件一起安装（覆盖 macOS、Linux、Windows 的 x64 与 arm64），要求 Paseo 0.11.1 及以上。
 
-## Claude plan limits (optional, off by default)
-
-Turn on **Show Claude plan limits** in the plugin's settings to see your Claude subscription's two limits: the current session (the 5-hour window) and the current week (all models), each with the share used and when it resets. They appear as a compact second line in the sidebar footer with a small bar per limit (yellow from 70%, red from 90%; on a narrow sidebar the bars and then the weekly figure drop out), as a **Claude plan limits** block in the popover, and as a card on the Details screen. Reset times are shown in your device's time zone. Only these two limits are shown, the same two Claude Code's `/usage` shows for a `claude setup-token` sign-in.
-
-The numbers come from Claude Code's own `/usage` command on the daemon's host. Claude Code fetches them from Anthropic with its own sign-in (its login, or `CLAUDE_CODE_OAUTH_TOKEN` in the daemon's environment). The plugin never reads, stores or sends a Claude token, and makes no network requests of its own. `/usage` runs no model turn, so checking uses none of your plan.
-
-- The daemon runs `claude -p /usage --no-session-persistence` in an empty folder of its own (in the system temp folder). It runs only when a Paseo view asks for the numbers, and at most once per **Minimum refresh interval** (5 minutes by default, manual refreshes included). Failed runs wait longer, up to an hour.
-- With a `claude setup-token` token, `claude -p /usage` prints no limits. The **Interactive fallback** (on by default) then starts Claude Code in a pseudo-terminal through the system `script` command, types `/usage`, reads the screen and quits. The first time, it answers Claude Code's folder trust prompt for the plugin's empty folder, which Claude Code records in `~/.claude.json`. Claude Code may run your SessionStart hooks for this session. The fallback works on Linux and macOS; turn it off to only use `claude -p`.
-- Needs Claude Code (`claude`) on the daemon's host, signed in to a Claude Pro, Max or Ultra plan, and set up once interactively. It is found on the daemon's `PATH`, in `~/.local/bin` or `~/.claude/local`, or at the path set in the settings.
-- If Claude Code changes how `/usage` looks, the numbers may stop being read; the block then says so instead of showing wrong numbers.
-
-While the feature is off, nothing runs and no new element appears, apart from one line on the Details screen pointing to the setting.
-
-## Freshness
-
-The daemon runs ccusage once for all views and caches the result for a minute. When an agent finishes a turn, the cache is refreshed a few seconds later if someone has looked at the numbers in the last 15 minutes. While a refresh runs, the previous numbers are shown. If a refresh fails, older numbers stay visible with a warning.
-
-## Setup and limits
-
-ccusage is bundled with the plugin, so nothing needs to be on the daemon's `PATH`. The bundled build covers macOS, Linux and Windows on x64 and arm64; elsewhere a `ccusage` on the daemon's `PATH` is used. Requires Paseo 0.11.1 or later.
-
-Days and weeks use the daemon's timezone, and weeks start on Monday. Costs come from the pricing table built into ccusage (`--offline`), so nothing is fetched from the network. They are estimates of API list prices, not what a subscription plan bills. Only usage written to logs on the daemon's machine is counted; agents on other machines and logs that an agent has deleted or rotated are not. The plugin reads local log files and sends nothing off the host. The optional Claude plan limits are read by Claude Code itself, as described above.
+所有数据均从本机日志离线读取，费用按 ccusage 内置的 API 标价表估算，不向外发送任何数据。

@@ -22,9 +22,7 @@
     "assets/"
   ],
   "scripts": {
-    "typecheck": "tsc --noEmit",
-    "test": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --import ./test/register.mjs --test test/*.test.ts",
-    "usage:live": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --import ./test/register.mjs test/usage-live.ts"
+    "typecheck": "tsc --noEmit"
   },
   "devDependencies": {
     "@getpaseo/plugin": "0.11.1",

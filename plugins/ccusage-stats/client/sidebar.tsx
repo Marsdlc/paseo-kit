@@ -19,12 +19,6 @@ import {
   type UsageReport,
 } from "./data";
 import { formatAgo, formatCost, formatPercent, formatTokens } from "./format";
-import {
-  ClaudeLimitsSection,
-  limitsAccessibilityText,
-  LimitsSidebarLine,
-  useClaudeLimits,
-} from "./limits";
 import { AgentList, FONT, Headline } from "./summary";
 import { MONO_TEXT } from "./terminal";
 
@@ -60,16 +54,13 @@ function todayOf(report: UsageReport) {
 
 export function UsageSidebarItem({ theme, openPopover }: PluginSidebarItemProps) {
   const { data, error } = useUsageReport();
-  const { data: limits } = useClaudeLimits();
   const [available, setAvailable] = useState<number | null>(null);
   const onLayout = useCallback(
     (event: LayoutChangeEvent) => setAvailable(event.nativeEvent.layout.width),
     [],
   );
 
-  const showUsage = Boolean(data || error);
-  const showLimits = limits?.enabled === true;
-  if (!showUsage && !showLimits) return null;
+  if (!data && !error) return null;
   const today = data ? todayOf(data) : undefined;
   const typical = data ? typicalDay(data.daily) : null;
   const width = available ?? WIDTH_FOR_COST;
@@ -77,10 +68,9 @@ export function UsageSidebarItem({ theme, openPopover }: PluginSidebarItemProps)
     today && typical && !typical.estimated
       ? `，为典型日的 ${formatPercent(today.usage.cost / typical.cost)}`
       : "";
-  const label =
-    (today
-      ? `今日 Token 用量：${formatTokens(today.usage.totalTokens)} tokens${pace}，估算费用 ${formatCost(today.usage.cost)}`
-      : "Token 用量暂不可用") + limitsAccessibilityText(limits);
+  const label = today
+    ? `今日 Token 用量：${formatTokens(today.usage.totalTokens)} tokens${pace}，估算费用 ${formatCost(today.usage.cost)}`
+    : "Token 用量暂不可用";
 
   return (
     <Pressable
@@ -89,77 +79,69 @@ export function UsageSidebarItem({ theme, openPopover }: PluginSidebarItemProps)
       onPress={() => openPopover(UsagePopover)}
       style={triggerStyle(theme)}
     >
-      <View onLayout={onLayout} style={{ flex: 1, minWidth: 0, gap: 4, overflow: "hidden" }}>
-        {showUsage ? (
-          <View
-            style={{
-              flexDirection: "row",
-              alignItems: "center",
-              overflow: "hidden",
-            }}
-          >
-            <Icon name="Coins" size={ICON_SIZE} color={theme.colors.accent} />
-            {today && data && typical ? (
-              <>
-                <Text
-                  numberOfLines={1}
-                  style={[
-                    MONO_TEXT,
-                    {
-                      marginLeft: ICON_GAP,
-                      fontSize: FONT.body,
-                      color: theme.colors.foreground,
-                    },
-                  ]}
-                >
-                  {formatTokens(today.usage.totalTokens)}
-                </Text>
-                {width >= WIDTH_FOR_METER ? (
-                  <View style={{ flex: 1, minWidth: MIN_METER_WIDTH, marginLeft: TEXT_GAP }}>
-                    <PaceBar
-                      theme={theme}
-                      segments={agentSegments(theme, data.agents, today, "cost")}
-                      typical={typical.cost}
-                      estimated={typical.estimated}
-                    />
-                  </View>
-                ) : (
-                  <View style={{ flex: 1 }} />
-                )}
-                {width >= WIDTH_FOR_COST ? (
-                  <Text
-                    numberOfLines={1}
-                    style={[
-                      MONO_TEXT,
-                      {
-                        marginLeft: TEXT_GAP,
-                        fontSize: FONT.body,
-                        color: theme.colors.foregroundMuted,
-                      },
-                    ]}
-                  >
-                    {formatCost(today.usage.cost)}
-                  </Text>
-                ) : null}
-              </>
+      <View
+        onLayout={onLayout}
+        style={{ flex: 1, minWidth: 0, flexDirection: "row", alignItems: "center", overflow: "hidden" }}
+      >
+        <Icon name="Coins" size={ICON_SIZE} color={theme.colors.accent} />
+        {today && data && typical ? (
+          <>
+            <Text
+              numberOfLines={1}
+              style={[
+                MONO_TEXT,
+                {
+                  marginLeft: ICON_GAP,
+                  fontSize: FONT.body,
+                  color: theme.colors.foreground,
+                },
+              ]}
+            >
+              {formatTokens(today.usage.totalTokens)}
+            </Text>
+            {width >= WIDTH_FOR_METER ? (
+              <View style={{ flex: 1, minWidth: MIN_METER_WIDTH, marginLeft: TEXT_GAP }}>
+                <PaceBar
+                  theme={theme}
+                  segments={agentSegments(theme, data.agents, today, "cost")}
+                  typical={typical.cost}
+                  estimated={typical.estimated}
+                />
+              </View>
             ) : (
+              <View style={{ flex: 1 }} />
+            )}
+            {width >= WIDTH_FOR_COST ? (
               <Text
                 numberOfLines={1}
                 style={[
                   MONO_TEXT,
                   {
-                    marginLeft: ICON_GAP,
+                    marginLeft: TEXT_GAP,
                     fontSize: FONT.body,
                     color: theme.colors.foregroundMuted,
                   },
                 ]}
               >
-                用量暂不可用
+                {formatCost(today.usage.cost)}
               </Text>
-            )}
-          </View>
-        ) : null}
-        {showLimits ? <LimitsSidebarLine theme={theme} state={limits} width={width} /> : null}
+            ) : null}
+          </>
+        ) : (
+          <Text
+            numberOfLines={1}
+            style={[
+              MONO_TEXT,
+              {
+                marginLeft: ICON_GAP,
+                fontSize: FONT.body,
+                color: theme.colors.foregroundMuted,
+              },
+            ]}
+          >
+            用量暂不可用
+          </Text>
+        )}
       </View>
     </Pressable>
   );
@@ -269,7 +251,6 @@ export function UsagePopover({ theme, layout, openScreen }: PluginPopoverProps) 
         <Legend theme={theme} order={data.agents} periods={periods} />
       </View>
       <AgentList theme={theme} order={data.agents} period={periods[selected]} />
-      <ClaudeLimitsSection theme={theme} compact />
       <Footer theme={theme} report={data} onMore={() => openScreen({ screenId: "usage" })} />
     </View>
   );

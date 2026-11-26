@@ -2,7 +2,6 @@ import type { PluginClientContext } from "@getpaseo/plugin/client";
 import { UsageScreen } from "./client/screen";
 import { contributeSessionPills, SESSION_PANEL_ID } from "./client/session";
 import { SessionUsagePanel } from "./client/session-panel";
-import { SettingsScreen } from "./client/settings-screen";
 import { UsageSidebarItem } from "./client/sidebar";
 
 export default function contribute(client: PluginClientContext) {
@@ -11,12 +10,6 @@ export default function contribute(client: PluginClientContext) {
     id: "usage-today",
     title: "Token 用量",
     Component: UsageSidebarItem,
-  });
-  client.addSettingsScreen({
-    id: "settings",
-    title: "Token 用量",
-    icon: "Coins",
-    Component: SettingsScreen,
   });
   client.addWorkspacePanel({
     id: SESSION_PANEL_ID,
