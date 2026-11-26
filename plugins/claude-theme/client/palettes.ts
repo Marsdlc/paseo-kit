@@ -30,7 +30,8 @@ export const claudeLight: ThemeInput = {
 
 /**
  * Warm charcoal dark palette: brown-tinted grays instead of blue-gray,
- * a deeper sidebar, and a brighter clay accent.
+ * lifted one step so it reads less dim, a slightly deeper sidebar, and a
+ * crisp sky-blue accent.
  */
 export const claudeDark: ThemeInput = {
   id: "claude-dark",
@@ -42,9 +43,9 @@ export const claudeDark: ThemeInput = {
     raised: "#393835", // cards, composer, popovers
     control: "#42413D",
     border: "#4D4C47",
-    accent: "#E08A6A", // clay
+    accent: "#6AB0F5", // sky blue
     mutedForeground: "#BDBAB0",
-    ring: "#E08A6A",
+    ring: "#6AB0F5",
     sidebar: "#272623",
     sidebarHover: "#33322F",
     sidebarSelected: "#3E3D39",

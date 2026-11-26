@@ -21,7 +21,7 @@ paseo plugin install github:Marsdlc/paseo-kit:plugins/claude-theme
 | 侧边栏 | `#F3F1EA` | `#272623` |
 | 正文 | `#141413` | `#FAF9F5` |
 | 次要文字 | `#6B6A64` | `#BDBAB0` |
-| 强调色 | `#C96442` | `#E08A6A` |
+| 强调色 | `#C96442`（陶土橙） | `#6AB0F5`（天蓝） |
 
 配色定义在 [`client/palettes.ts`](client/palettes.ts)。
 
