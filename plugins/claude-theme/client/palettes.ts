@@ -29,28 +29,27 @@ export const claudeLight: ThemeInput = {
 };
 
 /**
- * Warm charcoal dark palette: brown-tinted grays instead of blue-gray,
- * lifted one step so it reads less dim, a slightly deeper sidebar, and a
- * crisp sky-blue accent.
+ * Cool dark gray palette: slightly blue-tinted grays for a crisp, clean
+ * canvas, a deeper sidebar, and the warm clay accent for contrast.
  */
 export const claudeDark: ThemeInput = {
   id: "claude-dark",
   name: "Claude 暗色",
   appearance: "dark",
   colors: {
-    background: "#2E2D2A", // warm charcoal canvas
-    foreground: "#FAF9F5", // ivory text
-    raised: "#393835", // cards, composer, popovers
-    control: "#42413D",
-    border: "#4D4C47",
-    accent: "#6AB0F5", // sky blue
-    mutedForeground: "#BDBAB0",
-    ring: "#6AB0F5",
-    sidebar: "#272623",
-    sidebarHover: "#33322F",
-    sidebarSelected: "#3E3D39",
-    surface3: "#484743",
-    surface4: "#55544F",
-    foregroundExtraMuted: "#918F86",
+    background: "#26282C", // cool dark gray canvas
+    foreground: "#F3F4F6",
+    raised: "#303338", // cards, composer, popovers
+    control: "#393C42",
+    border: "#44474E",
+    accent: "#E08A6A", // clay
+    mutedForeground: "#B0B4BC",
+    ring: "#E08A6A",
+    sidebar: "#1F2124",
+    sidebarHover: "#2A2D31",
+    sidebarSelected: "#34373C",
+    surface3: "#40434A",
+    surface4: "#4D5058",
+    foregroundExtraMuted: "#878B94",
   },
 };

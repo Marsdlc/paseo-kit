@@ -12,7 +12,7 @@ A Chinese [Paseo](https://paseo.sh) plugin repository containing `ccusage-stats`
 | ID | Name | What it does |
 | --- | --- | --- |
 | [`ccusage-stats`](plugins/ccusage-stats) | Token 用量统计 | Terminal-style Chinese token usage and estimated cost dashboard for coding agents via [ccusage](https://github.com/ccusage/ccusage): today's total, day/week/month breakdown by agent with brand colors, and per-session composer pill & detail panel. |
-| [`claude-theme`](plugins/claude-theme) | Claude 主题 | Warm, paper-toned themes inspired by the Claude desktop app: Claude 亮色 (light), Claude 暗色 (dark), and Claude 跟随系统, which follows the system light/dark mode. |
+| [`claude-theme`](plugins/claude-theme) | Claude 主题 | Themes inspired by the Claude desktop app: Claude 亮色 (warm paper-toned light), Claude 暗色 (cool dark gray), and Claude 跟随系统, which follows the system light/dark mode. |
 
 ### ccusage-stats highlights
 

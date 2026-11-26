@@ -1,6 +1,6 @@
 # claude-theme
 
-参考 Claude 桌面端风格的 Paseo 主题，提供「Claude 亮色」「Claude 暗色」与「Claude 跟随系统」三种外观。
+参考 Claude 桌面端风格的 Paseo 主题（亮色为暖色纸感，暗色为冷调深灰），提供「Claude 亮色」「Claude 暗色」与「Claude 跟随系统」三种外观。
 
 详细说明见 [OVERVIEW.md](OVERVIEW.md)。
 
@@ -16,12 +16,12 @@ paseo plugin install github:Marsdlc/paseo-kit:plugins/claude-theme
 
 | | Claude 亮色 | Claude 暗色 |
 | --- | --- | --- |
-| 主背景 | `#FAF9F5` | `#2E2D2A` |
-| 卡片 / 输入框 | `#FFFFFF` | `#393835` |
-| 侧边栏 | `#F3F1EA` | `#272623` |
-| 正文 | `#141413` | `#FAF9F5` |
-| 次要文字 | `#6B6A64` | `#BDBAB0` |
-| 强调色 | `#C96442`（陶土橙） | `#6AB0F5`（天蓝） |
+| 主背景 | `#FAF9F5` | `#26282C` |
+| 卡片 / 输入框 | `#FFFFFF` | `#303338` |
+| 侧边栏 | `#F3F1EA` | `#1F2124` |
+| 正文 | `#141413` | `#F3F4F6` |
+| 次要文字 | `#6B6A64` | `#B0B4BC` |
+| 强调色 | `#C96442`（陶土橙） | `#E08A6A`（陶土橙） |
 
 配色定义在 [`client/palettes.ts`](client/palettes.ts)。
 
