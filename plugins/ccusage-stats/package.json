@@ -1,12 +1,12 @@
 {
   "name": "ccusage-stats",
   "private": true,
-  "version": "0.0.0",
-  "description": "Token usage and estimated cost of your coding agents, powered by ccusage",
+  "version": "1.0.0",
+  "description": "基于 ccusage 的终端风格编码 Agent Token 消耗与费用分析面板",
   "license": "Apache-2.0",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/a31521424/paseo-kit.git",
+    "url": "git+https://github.com/Marsdlc/paseo-kit.git",
     "directory": "plugins/ccusage-stats"
   },
   "files": [
