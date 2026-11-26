@@ -14,7 +14,7 @@ import { useEntryPoster } from "./queries";
 import { clearFinishedTransfers, dismissTransfer, onUploaded, useOpenRequest, useTransfers, type Transfer } from "./state";
 import type { WebFile } from "./web";
 import { discardPending, matchesPending, resumePending, uploadFiles } from "./transfers";
-import { Button, Chip, IconButton, Kbd, Message, NO_OUTLINE, ProgressBar, Segmented, kindIcon, timeAgo } from "./ui";
+import { Button, Chip, IconButton, Kbd, Message, MONO_TEXT, NO_OUTLINE, ProgressBar, Segmented, kindIcon, timeAgo } from "./ui";
 import { attachDropTarget, focusIsFree, isShown, isWeb, listenForKeys, pickFiles } from "./web";
 
 const tabStateSchema = z.object({
@@ -74,35 +74,37 @@ function EntryRow({
         paddingLeft: 8,
         paddingRight: 10,
         paddingVertical: 6,
-        borderRadius: 8,
+        borderRadius: 2,
+        borderWidth: 1,
+        borderColor: selected ? colors.accent : state.pressed || (state as { hovered?: boolean }).hovered ? colors.border : "transparent",
         backgroundColor: selected ? colors.surface2 : state.pressed || (state as { hovered?: boolean }).hovered ? colors.surface1 : "transparent",
       })}
     >
-      <View style={{ position: "absolute", left: 0, top: 10, bottom: 10, width: 3, borderRadius: 2, backgroundColor: selected ? colors.accent : "transparent" }} />
+      <View style={{ position: "absolute", left: 0, top: 6, bottom: 6, width: 2, backgroundColor: selected ? colors.accent : "transparent" }} />
       {isDir ? (
-        <View style={{ width: 76, height: 44, alignItems: "center", justifyContent: "center" }}>
-          <Icon name="Folder" size={22} color={colors.foregroundMuted} />
+        <View style={{ width: 76, height: 44, borderRadius: 2, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.surface1, alignItems: "center", justifyContent: "center" }}>
+          <Icon name="Folder" size={20} color={colors.foregroundMuted} />
         </View>
       ) : (
-        <View style={{ width: 76, height: 44, borderRadius: 6, overflow: "hidden", backgroundColor: colors.surface2, alignItems: "center", justifyContent: "center" }}>
+        <View style={{ width: 76, height: 44, borderRadius: 2, borderWidth: 1, borderColor: colors.border, overflow: "hidden", backgroundColor: colors.surface2, alignItems: "center", justifyContent: "center" }}>
           {poster.data ? (
             <Image source={{ uri: poster.data }} resizeMode="cover" style={{ width: 76, height: 44 }} />
           ) : (
-            <Icon name={kindIcon(entry.kind)} size={18} color={colors.foregroundMuted} />
+            <Icon name={kindIcon(entry.kind)} size={17} color={colors.foregroundMuted} />
           )}
           {probe ? (
-            <View style={{ position: "absolute", right: 3, bottom: 3, paddingHorizontal: 4, borderRadius: 3, backgroundColor: "rgba(0,0,0,0.7)" }}>
-              <Text style={{ color: "#fff", fontSize: 9, fontWeight: "600", fontVariant: ["tabular-nums"] }}>{probe}</Text>
+            <View style={{ position: "absolute", right: 2, bottom: 2, paddingHorizontal: 4, borderRadius: 1, backgroundColor: "rgba(0,0,0,0.82)" }}>
+              <Text style={[MONO_TEXT, { color: "#fff", fontSize: 9, fontWeight: "700" }]}>{probe}</Text>
             </View>
           ) : null}
         </View>
       )}
       <View style={{ flex: 1, gap: 3 }}>
-        <Text numberOfLines={1} style={{ color: colors.foreground, fontSize: 13, fontWeight: selected ? "600" : "500" }}>
+        <Text numberOfLines={1} style={[MONO_TEXT, { color: selected ? colors.accent : colors.foreground, fontSize: 12, fontWeight: selected ? "700" : "500" }]}>
           {entry.name}
         </Text>
-        <Text numberOfLines={1} style={{ color: colors.foregroundMuted, fontSize: 11 }}>
-          {[isDir ? null : formatBytes(entry.size), timeAgo(entry.modifiedAt, locale), showFolder && folder ? folder : null].filter(Boolean).join("  ·  ")}
+        <Text numberOfLines={1} style={[MONO_TEXT, { color: colors.foregroundMuted, fontSize: 10 }]}>
+          {[isDir ? null : formatBytes(entry.size), timeAgo(entry.modifiedAt, locale), showFolder && folder ? folder : null].filter(Boolean).join(" | ")}
         </Text>
       </View>
       {isDir ? <Icon name="ChevronRight" size={15} color={colors.foregroundMuted} /> : null}
@@ -166,21 +168,23 @@ function SourcePicker({
                 flexDirection: "row",
                 alignItems: "center",
                 gap: 10,
-                paddingVertical: 10,
-                paddingHorizontal: 12,
-                borderRadius: 8,
+                paddingVertical: 9,
+                paddingHorizontal: 10,
+                borderRadius: 2,
+                borderWidth: 1,
+                borderColor: selected ? colors.accent : "transparent",
                 backgroundColor: selected || pressed ? colors.surface2 : "transparent",
               })}
             >
-              <Icon name={option.icon} size={16} color={selected ? colors.accent : colors.foregroundMuted} />
-              <Text numberOfLines={1} style={{ color: colors.foreground, fontSize: 13, flex: 1 }}>
+              <Icon name={option.icon} size={15} color={selected ? colors.accent : colors.foregroundMuted} />
+              <Text numberOfLines={1} style={[MONO_TEXT, { color: colors.foreground, fontSize: 12, flex: 1 }]}>
                 {option.label}
               </Text>
-              {selected ? <Icon name="Check" size={15} color={colors.accent} /> : null}
+              {selected ? <Icon name="Check" size={14} color={colors.accent} /> : null}
             </Pressable>
           );
         })}
-        <Text style={{ color: colors.foregroundMuted, fontSize: 12, marginTop: 8 }}>{t("panel.otherLocation")}</Text>
+        <Text style={[MONO_TEXT, { color: colors.foregroundMuted, fontSize: 11, marginTop: 8 }]}>{t("panel.otherLocation")}</Text>
         <View style={{ flexDirection: "row", gap: 6, alignItems: "center" }}>
           <TextInput
             value={draft}
@@ -190,7 +194,7 @@ function SourcePicker({
             autoCapitalize="none"
             autoCorrect={false}
             onSubmitEditing={() => draft.trim() && onChoose(draft.trim())}
-            style={{ flex: 1, height: 34, borderWidth: 1, borderColor: colors.border, borderRadius: 8, paddingHorizontal: 10, color: colors.foreground, fontSize: 13 }}
+            style={[MONO_TEXT, { flex: 1, height: 32, borderWidth: 1, borderColor: colors.border, borderRadius: 2, paddingHorizontal: 9, color: colors.foreground, fontSize: 12, backgroundColor: colors.surface0 }]}
           />
           <Button theme={theme} primary label={t("panel.go")} disabled={!draft.trim()} onPress={() => onChoose(draft.trim())} />
         </View>
@@ -516,10 +520,12 @@ export function MediaPanel({ theme, layout, workspaceId, tab }: PluginWorkspaceP
 
   const listColumn = (
     <View style={{ width: narrow ? "100%" : 330, flexShrink: 0, borderRightWidth: narrow ? 0 : 1, borderRightColor: colors.border, flex: narrow ? 1 : undefined }}>
-      <View style={{ paddingHorizontal: 12, paddingTop: 12, paddingBottom: 8, gap: 10 }}>
+      <View style={{ paddingHorizontal: 12, paddingTop: 12, paddingBottom: 8, gap: 10, backgroundColor: colors.surface1 }}>
         <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
-          <Text style={{ color: colors.foreground, fontSize: 15, fontWeight: "600" }}>{t("panel.title")}</Text>
-          {listing.data ? <Text style={{ color: colors.foregroundMuted, fontSize: 12, fontVariant: ["tabular-nums"] }}>{counts.all}</Text> : null}
+          <Text style={[MONO_TEXT, { color: colors.foreground, fontSize: 13, fontWeight: "700" }]}>
+            <Text style={{ color: colors.accent }}>$ </Text>{t("panel.title")}
+          </Text>
+          {listing.data ? <Text style={[MONO_TEXT, { color: colors.foregroundMuted, fontSize: 11 }]}>[{counts.all}]</Text> : null}
           <View style={{ flex: 1 }} />
           <IconButton theme={theme} icon="RefreshCw" size="sm" label={t("panel.refresh")} onPress={() => void listing.refetch()} />
           {isWeb ? (
@@ -548,8 +554,8 @@ export function MediaPanel({ theme, layout, workspaceId, tab }: PluginWorkspaceP
             />
           </View>
         </View>
-        <View style={{ flexDirection: "row", alignItems: "center", gap: 8, height: 32, paddingHorizontal: 10, borderRadius: 8, backgroundColor: colors.surface1 }}>
-          <Icon name="Search" size={14} color={colors.foregroundMuted} />
+        <View style={{ flexDirection: "row", alignItems: "center", gap: 8, height: 30, paddingHorizontal: 9, borderRadius: 2, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.surface0 }}>
+          <Icon name="Search" size={13} color={colors.foregroundMuted} />
           <TextInput
             ref={searchRef}
             value={search}
@@ -558,17 +564,17 @@ export function MediaPanel({ theme, layout, workspaceId, tab }: PluginWorkspaceP
             placeholderTextColor={colors.foregroundMuted}
             autoCapitalize="none"
             autoCorrect={false}
-            style={[{ flex: 1, height: 30, color: colors.foreground, fontSize: 13 }, NO_OUTLINE]}
+            style={[MONO_TEXT, { flex: 1, height: 28, color: colors.foreground, fontSize: 12 }, NO_OUTLINE]}
           />
           {search ? (
             <Pressable accessibilityRole="button" accessibilityLabel={t("panel.clearSearch")} onPress={() => setSearch("")}>
-              <Icon name="X" size={14} color={colors.foregroundMuted} />
+              <Icon name="X" size={13} color={colors.foregroundMuted} />
             </Pressable>
           ) : isWeb ? (
             <Kbd theme={theme}>/</Kbd>
           ) : null}
         </View>
-        <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 0, marginHorizontal: -4 }}>
+        <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 2 }}>
           {filterOptions.map((option) => (
             <Chip
               key={option.value}
@@ -586,15 +592,15 @@ export function MediaPanel({ theme, layout, workspaceId, tab }: PluginWorkspaceP
           <ScrollView horizontal showsHorizontalScrollIndicator={false}>
             <View style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
               <Pressable accessibilityRole="button" onPress={() => update({ dir: null })}>
-                <Text style={{ color: crumbs.length ? colors.accent : colors.foreground, fontSize: 12, fontWeight: "500" }}>
+                <Text style={[MONO_TEXT, { color: crumbs.length ? colors.accent : colors.foreground, fontSize: 11, fontWeight: "700" }]}>
                   {remotePrefix(base) ?? (relativeTo(workspaceRoot, base) === base ? base.split("/").filter(Boolean).at(-1) ?? "/" : t("panel.workspace"))}
                 </Text>
               </Pressable>
               {crumbs.map((crumb, index) => (
                 <View key={`${index}:${crumb}`} style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
-                  <Icon name="ChevronRight" size={12} color={colors.foregroundMuted} />
+                  <Icon name="ChevronRight" size={11} color={colors.foregroundMuted} />
                   <Pressable accessibilityRole="button" onPress={() => update({ dir: joinPath(base, crumbs.slice(0, index + 1).join("/")) })}>
-                    <Text style={{ color: index === crumbs.length - 1 ? colors.foreground : colors.accent, fontSize: 12, fontWeight: "500" }}>{crumb}</Text>
+                    <Text style={[MONO_TEXT, { color: index === crumbs.length - 1 ? colors.foreground : colors.accent, fontSize: 11, fontWeight: "700" }]}>{crumb}</Text>
                   </Pressable>
                 </View>
               ))}
@@ -643,11 +649,11 @@ export function MediaPanel({ theme, layout, workspaceId, tab }: PluginWorkspaceP
       <PendingUploads theme={theme} uploads={unfinished} root={base ?? ""} locale={locale} onResume={resumeFromList} onDiscard={discardFromList} />
 
       {visibleTransfers.length > 0 ? (
-        <View style={{ borderTopWidth: 1, borderTopColor: colors.border, paddingHorizontal: 12, paddingVertical: 10, gap: 2 }}>
+        <View style={{ borderTopWidth: 1, borderTopColor: colors.border, paddingHorizontal: 12, paddingVertical: 10, gap: 2, backgroundColor: colors.surface1 }}>
           <View style={{ flexDirection: "row", alignItems: "center" }}>
-            <Text style={{ color: colors.foregroundMuted, fontSize: 11, fontWeight: "600", flex: 1, textTransform: "uppercase", letterSpacing: 0.5 }}>{t("transfers.title")}</Text>
+            <Text style={[MONO_TEXT, { color: colors.foregroundMuted, fontSize: 11, fontWeight: "700", flex: 1 }]}>▸ {t("transfers.title")}</Text>
             <Pressable onPress={clearFinishedTransfers} accessibilityRole="button">
-              <Text style={{ color: colors.accent, fontSize: 11 }}>{t("transfers.clear")}</Text>
+              <Text style={[MONO_TEXT, { color: colors.accent, fontSize: 11 }]}>[{t("transfers.clear")}]</Text>
             </Pressable>
           </View>
           {visibleTransfers.map((transfer) => (
@@ -680,11 +686,13 @@ export function MediaPanel({ theme, layout, workspaceId, tab }: PluginWorkspaceP
         </ScrollView>
       ) : !narrow ? (
         <View style={{ flex: 1, alignItems: "center", justifyContent: "center", padding: 24, gap: 14 }}>
-          <View style={{ width: 56, height: 56, borderRadius: 16, backgroundColor: colors.surface1, alignItems: "center", justifyContent: "center" }}>
-            <Icon name="Clapperboard" size={26} color={colors.foregroundMuted} />
+          <View style={{ width: 52, height: 52, borderRadius: 2, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.surface1, alignItems: "center", justifyContent: "center" }}>
+            <Icon name="Clapperboard" size={24} color={colors.accent} />
           </View>
-          <Text style={{ color: colors.foreground, fontSize: 15, fontWeight: "600" }}>{t("panel.pick")}</Text>
-          <Text style={{ color: colors.foregroundMuted, fontSize: 12, textAlign: "center", maxWidth: 360 }}>{isWeb ? t("panel.pickHint") : t("panel.pickHintNative")}</Text>
+          <Text style={[MONO_TEXT, { color: colors.foreground, fontSize: 14, fontWeight: "700" }]}>
+            <Text style={{ color: colors.accent }}>$ </Text>{t("panel.pick")}
+          </Text>
+          <Text style={[MONO_TEXT, { color: colors.foregroundMuted, fontSize: 11, textAlign: "center", maxWidth: 380 }]}>{isWeb ? t("panel.pickHint") : t("panel.pickHintNative")}</Text>
           {isWeb ? (
             <View style={{ flexDirection: "row", flexWrap: "wrap", justifyContent: "center", gap: 14, marginTop: 4 }}>
               {(
@@ -701,7 +709,7 @@ export function MediaPanel({ theme, layout, workspaceId, tab }: PluginWorkspaceP
                       {key}
                     </Kbd>
                   ))}
-                  <Text style={{ color: colors.foregroundMuted, fontSize: 12 }}>{label}</Text>
+                  <Text style={[MONO_TEXT, { color: colors.foregroundMuted, fontSize: 11 }]}>{label}</Text>
                 </View>
               ))}
             </View>
@@ -732,16 +740,16 @@ export function MediaPanel({ theme, layout, workspaceId, tab }: PluginWorkspaceP
             borderWidth: 2,
             borderStyle: "dashed",
             borderColor: colors.accent,
-            borderRadius: 10,
+            borderRadius: 2,
             backgroundColor: colors.surface1,
-            opacity: 0.92,
+            opacity: 0.94,
             alignItems: "center",
             justifyContent: "center",
             gap: 8,
           }}
         >
-          <Icon name="Upload" size={28} color={colors.accent} />
-          <Text style={{ color: colors.foreground, fontSize: 14 }}>{t("panel.dropHere", { dir: uploadDir ? relativeTo(workspaceRoot, uploadDir) : "" })}</Text>
+          <Icon name="Upload" size={26} color={colors.accent} />
+          <Text style={[MONO_TEXT, { color: colors.foreground, fontSize: 13 }]}>{t("panel.dropHere", { dir: uploadDir ? relativeTo(workspaceRoot, uploadDir) : "" })}</Text>
         </View>
       ) : null}
     </View>

@@ -5,7 +5,6 @@ import { formatCost, formatTokens } from "./format";
 const PILL_ID = "session-usage";
 export const SESSION_PANEL_ID = "session-usage";
 const PILL_REFRESH_MS = 60_000;
-// The daemon refreshes its report a few seconds after a turn ends; ask after that.
 const AFTER_TURN_DELAY_MS = 8_000;
 
 function pillLabel(match: SessionMatch | undefined): {
@@ -19,7 +18,7 @@ function pillLabel(match: SessionMatch | undefined): {
   return {
     visible: true,
     label: formatTokens(usage.totalTokens),
-    title: `Session usage: ${formatTokens(usage.totalTokens)} tokens, ${formatCost(usage.cost)}`,
+    title: `会话用量：${formatTokens(usage.totalTokens)} tokens，估算费用 ${formatCost(usage.cost)}`,
   };
 }
 
@@ -30,14 +29,6 @@ interface AgentLike {
   archivedAt?: string | null;
 }
 
-/**
- * A composer pill per agent with this session's token total. Pills stay hidden until ccusage has
- * usage for the agent's provider session, so agents ccusage cannot read show nothing.
- *
- * Pressing a pill opens the session panel rather than a popover: Paseo 0.11.2 keeps one open flag
- * per pill and can mount an agent's composer more than once, so a popover also opened, unanchored,
- * in the window's top-left corner.
- */
 export function contributeSessionPills(client: PluginClientContext): () => void {
   const pills = new Map<string, PluginButtonRegistration>();
   const statuses = new Map<string, string | undefined>();
@@ -70,7 +61,6 @@ export function contributeSessionPills(client: PluginClientContext): () => void 
     const previous = statuses.get(agent.id);
     statuses.set(agent.id, agent.status);
     if (pills.has(agent.id)) {
-      // A turn just finished: its usage is in the logs now.
       if (previous === "running" && agent.status !== "running")
         scheduleRefresh(AFTER_TURN_DELAY_MS);
       return false;
@@ -83,7 +73,7 @@ export function contributeSessionPills(client: PluginClientContext): () => void 
         workspaceId,
         agentId: agent.id,
         button: {
-          title: "Session token usage",
+          title: "会话 Token 用量",
           icon: "Coins",
           visible: false,
           behavior: {
@@ -108,7 +98,6 @@ export function contributeSessionPills(client: PluginClientContext): () => void 
     statuses.clear();
   };
 
-  // An owned list subscription delivers existing agents, then updates, and a fresh snapshot after a reconnect.
   void client.paseo.agents
     .list({ subscribe: {}, signal: lifetime.signal })
     .then(({ subscription }) => {

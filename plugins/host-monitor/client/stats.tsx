@@ -34,7 +34,7 @@ export function percentSeverity(percent: number): Severity {
 export function severityColor(theme: PluginTheme, severity: Severity): string {
   if (severity === "critical") return theme.colors.statusDanger;
   if (severity === "warning") return theme.colors.statusWarning;
-  return theme.colors.foregroundMuted;
+  return theme.colors.accent;
 }
 
 export function loadColor(theme: PluginTheme, percent: number): string {
@@ -78,7 +78,7 @@ export function scaleToPeak(samples: readonly HostSample[], pick: (s: HostSample
 // A load above zero always shows a sliver, so a nearly idle meter is not mistaken for an empty one.
 const MIN_FILL_WIDTH = 2;
 
-/** A horizontal bar filled to `percent`, colored by load unless `severity` is given. Size it with `style`. */
+/** Crisp terminal-style squared horizontal meter with 1px frame. */
 export function Meter({
   theme,
   percent,
@@ -92,17 +92,18 @@ export function Meter({
   height: number;
   style?: ViewStyle;
 }) {
+  const fillColor = severityColor(theme, severity ?? percentSeverity(percent));
   return (
     <View
       style={[
         {
           height,
-          borderRadius: height / 2,
-          // The outline keeps an empty meter visible on surfaces close to the track color.
+          borderRadius: 1,
           borderWidth: 1,
           borderColor: theme.colors.border,
           overflow: "hidden",
-          backgroundColor: theme.colors.surface2,
+          backgroundColor: theme.colors.surface0,
+          padding: 1,
         },
         style,
       ]}
@@ -112,7 +113,7 @@ export function Meter({
           height: "100%",
           width: `${Math.min(Math.max(percent, 0), 100)}%`,
           minWidth: percent > 0 ? MIN_FILL_WIDTH : 0,
-          backgroundColor: severityColor(theme, severity ?? percentSeverity(percent)),
+          backgroundColor: fillColor,
         }}
       />
     </View>
@@ -124,11 +125,27 @@ interface SparklineProps {
   values: readonly number[];
   color: string;
   height: number;
+  borderColor?: string;
+  backgroundColor?: string;
 }
 
-export function Sparkline({ values, color, height }: SparklineProps) {
+export function Sparkline({ values, color, height, borderColor, backgroundColor }: SparklineProps) {
   return (
-    <View style={{ flexDirection: "row", alignItems: "flex-end", height, gap: 1 }}>
+    <View
+      style={{
+        flexDirection: "row",
+        alignItems: "flex-end",
+        height: height + 4,
+        gap: 1,
+        paddingHorizontal: 2,
+        paddingTop: 2,
+        paddingBottom: 1,
+        borderWidth: borderColor ? 1 : 0,
+        borderColor,
+        backgroundColor,
+        borderRadius: 1,
+      }}
+    >
       {values.map((value, index) => (
         <View
           key={index}
@@ -136,7 +153,7 @@ export function Sparkline({ values, color, height }: SparklineProps) {
             flex: 1,
             height: Math.max(1, (Math.min(value, 100) / 100) * height),
             backgroundColor: color,
-            opacity: 0.6,
+            opacity: index === values.length - 1 ? 1 : 0.72,
           }}
         />
       ))}

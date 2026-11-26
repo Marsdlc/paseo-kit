@@ -9,9 +9,9 @@ export default function contribute(client: PluginClientContext) {
 
   client.addCommandCenterItem({
     id: "download-current-file",
-    title: "Download current file",
+    title: "下载当前文件",
     icon: "Download",
-    keywords: ["download", "save", "file", "export"],
+    keywords: ["download", "save", "file", "export", "下载", "保存", "文件", "导出"],
     context: "workspace",
     onSelect() {
       const focused = readFocusedTab();
@@ -22,9 +22,9 @@ export default function contribute(client: PluginClientContext) {
   });
   client.addCommandCenterItem({
     id: "open-downloads",
-    title: "Open downloads",
+    title: "打开下载记录",
     icon: "FolderDown",
-    keywords: ["download", "history", "files"],
+    keywords: ["download", "history", "files", "下载", "历史", "记录"],
     context: "workspace",
     onSelect({ openPanel }) {
       openPanel("downloads");
@@ -32,13 +32,13 @@ export default function contribute(client: PluginClientContext) {
   });
   client.addWorkspacePanel({
     id: "downloads",
-    title: "Downloads",
+    title: "下载记录",
     icon: "FolderDown",
     context: "workspace",
     locations: ["workspace", "explorer"],
     Component: createHistoryPanel(client.rpc),
   });
-  client.addSidebarFooterItem({ id: "notices", title: "Download notices", Component: NoticeHost });
+  client.addSidebarFooterItem({ id: "notices", title: "下载通知", Component: NoticeHost });
 
   return listenForSaveShortcut((event) => {
     if (downloadFocusedFile(client.rpc, ownsServer)) event.preventDefault();

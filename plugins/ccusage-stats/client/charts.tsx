@@ -3,8 +3,8 @@ import { Pressable, Text, View, type PressableStateCallbackType } from "react-na
 import type { PeriodKind, UsagePeriod } from "../shared/usage";
 import { agentSwatch, foldAgents, OTHER_AGENT, type Swatch } from "./data";
 import { agentLabel, formatPeriodLong, formatPeriodShort, formatTokens } from "./format";
+import { MONO_TEXT } from "./terminal";
 
-// Thin marks with a hairline of surface between neighbours, so segments read apart without outlines.
 const SEGMENT_GAP = 2;
 
 type HoverState = PressableStateCallbackType & { hovered?: boolean };
@@ -14,7 +14,7 @@ export interface SegmentedOption<Value extends string> {
   label: string;
 }
 
-/** A compact segmented control: a recessed track with the selected option raised. */
+/** Terminal-style sharp bordered tab group. */
 export function Segmented<Value extends string>({
   theme,
   options,
@@ -36,8 +36,10 @@ export function Segmented<Value extends string>({
         flexDirection: "row",
         padding: 2,
         gap: 2,
-        borderRadius: 8,
-        backgroundColor: theme.colors.surface2,
+        borderRadius: 2,
+        borderWidth: 1,
+        borderColor: theme.colors.border,
+        backgroundColor: theme.colors.surface0,
       }}
     >
       {options.map((option) => {
@@ -50,24 +52,29 @@ export function Segmented<Value extends string>({
             accessibilityLabel={option.label}
             onPress={() => onChange(option.value)}
             style={({ hovered }: HoverState) => ({
-              minWidth: 28,
+              minWidth: 32,
               paddingVertical: 3,
               paddingHorizontal: 8,
-              borderRadius: 6,
+              borderRadius: 1,
               alignItems: "center" as const,
+              borderWidth: 1,
+              borderColor: selected ? theme.colors.accent : "transparent",
               backgroundColor: selected
-                ? theme.colors.surface0
+                ? theme.colors.surface2
                 : hovered
                   ? theme.colors.surface1
-                  : undefined,
+                  : "transparent",
             })}
           >
             <Text
-              style={{
-                fontSize: 12,
-                color: selected ? theme.colors.foreground : theme.colors.foregroundMuted,
-                fontWeight: selected ? "600" : "400",
-              }}
+              style={[
+                MONO_TEXT,
+                {
+                  fontSize: 11,
+                  color: selected ? theme.colors.accent : theme.colors.foregroundMuted,
+                  fontWeight: selected ? "700" : "400",
+                },
+              ]}
             >
               {option.label}
             </Text>
@@ -79,9 +86,9 @@ export function Segmented<Value extends string>({
 }
 
 export const PERIOD_OPTIONS: readonly SegmentedOption<PeriodKind>[] = [
-  { value: "daily", label: "Day" },
-  { value: "weekly", label: "Week" },
-  { value: "monthly", label: "Month" },
+  { value: "daily", label: "日" },
+  { value: "weekly", label: "周" },
+  { value: "monthly", label: "月" },
 ];
 
 export function SwatchDot({ swatch, size = 8 }: { swatch: Swatch; size?: number }) {
@@ -90,7 +97,7 @@ export function SwatchDot({ swatch, size = 8 }: { swatch: Swatch; size?: number 
       style={{
         width: size,
         height: size,
-        borderRadius: 2,
+        borderRadius: 1,
         backgroundColor: swatch.color,
         opacity: swatch.opacity,
       }}
@@ -104,7 +111,7 @@ export interface ShareSegment {
   swatch: Swatch;
 }
 
-/** A horizontal 100% bar: each segment's width is its share. An empty bar shows only the track. */
+/** A sharp horizontal 100% bar: each segment's width is its share. */
 export function ShareBar({
   theme,
   segments,
@@ -121,7 +128,7 @@ export function ShareBar({
         flexDirection: "row",
         height,
         gap: visible.length > 1 ? SEGMENT_GAP : 0,
-        borderRadius: height / 2,
+        borderRadius: 1,
         overflow: "hidden",
         backgroundColor: visible.length === 0 ? theme.colors.surface2 : undefined,
       }}
@@ -132,7 +139,6 @@ export function ShareBar({
           style={{
             flexGrow: segment.value,
             flexBasis: 0,
-            // Keep tiny shares visible as a sliver rather than vanishing.
             minWidth: 2,
             backgroundColor: segment.swatch.color,
             opacity: segment.swatch.opacity,
@@ -143,19 +149,13 @@ export function ShareBar({
   );
 }
 
-/**
- * Today against a typical day: the fill is today's total, split by agent, and a tick marks the
- * typical day. The track spans twice the typical day, so the tick sits mid-track until today
- * passes double; then the track stretches to today and the tick slides left. A default typical
- * day gets a muted tick, since it says nothing about this machine. Segments and typical share
- * one unit.
- */
+/** Today against a typical day, rendered as a crisp bordered TUI gauge with tick mark. */
 export function PaceBar({
   theme,
   segments,
   typical,
   estimated = false,
-  height = 6,
+  height = 7,
 }: {
   theme: PluginTheme;
   segments: readonly ShareSegment[];
@@ -171,17 +171,17 @@ export function PaceBar({
       <View
         style={{
           height,
-          borderRadius: height / 2,
-          // Outlined like host-monitor's meters, so the empty part of the track reads as a track.
+          borderRadius: 1,
           borderWidth: 1,
           borderColor: theme.colors.border,
           overflow: "hidden",
-          backgroundColor: theme.colors.surface2,
+          backgroundColor: theme.colors.surface0,
+          padding: 1,
         }}
       >
         {total > 0 ? (
           <View style={{ width: `${(total / scale) * 100}%`, minWidth: 2 }}>
-            <ShareBar theme={theme} segments={segments} height={height - 2} />
+            <ShareBar theme={theme} segments={segments} height={Math.max(height - 4, 2)} />
           </View>
         ) : null}
       </View>
@@ -192,7 +192,7 @@ export function PaceBar({
           width: 2,
           height: tickHeight,
           marginLeft: -1,
-          borderRadius: 1,
+          borderRadius: 0,
           backgroundColor: estimated ? theme.colors.foregroundMuted : theme.colors.foreground,
         }}
       />
@@ -214,10 +214,7 @@ export function agentSegments(
   }));
 }
 
-/**
- * Stacked columns, one per period, agents bottom-up in legend order. The selected column is
- * full strength and the rest recede; pressing a column selects it.
- */
+/** Stacked sharp rectangular columns with terminal baseline. */
 export function PeriodBars({
   theme,
   kind,
@@ -239,11 +236,22 @@ export function PeriodBars({
   labelEvery: number;
 }) {
   const peak = Math.max(1, ...periods.map((period) => period.usage.totalTokens));
-  const columnGap = periods.length > 20 ? 2 : 4;
+  const columnGap = periods.length > 20 ? 2 : 3;
   const lastIndex = periods.length - 1;
   return (
     <View style={{ gap: 4 }}>
-      <View style={{ height, flexDirection: "row", alignItems: "flex-end", gap: columnGap }}>
+      <View
+        style={{
+          height: height + 6,
+          flexDirection: "row",
+          alignItems: "flex-end",
+          gap: columnGap,
+          paddingTop: 4,
+          paddingBottom: 2,
+          borderBottomWidth: 1,
+          borderBottomColor: theme.colors.border,
+        }}
+      >
         {periods.map((period, index) => {
           const isSelected = index === selected;
           const barHeight = (period.usage.totalTokens / peak) * height;
@@ -253,32 +261,27 @@ export function PeriodBars({
               key={period.period}
               accessibilityRole="button"
               accessibilityState={{ selected: isSelected }}
-              accessibilityLabel={`${formatPeriodLong(kind, period.period)}: ${formatTokens(period.usage.totalTokens)} tokens`}
+              accessibilityLabel={`${formatPeriodLong(kind, period.period)}：${formatTokens(period.usage.totalTokens)} tokens`}
               onPress={() => onSelect(index)}
-              // The whole column height is the hit target, not just the bar.
               style={({ hovered }: HoverState) => ({
                 flex: 1,
                 height: "100%" as const,
                 justifyContent: "flex-end" as const,
-                borderRadius: 3,
+                borderRadius: 1,
                 backgroundColor: hovered && !isSelected ? theme.colors.surface2 : undefined,
               })}
             >
               {segments.length === 0 ? (
-                <View
-                  style={{ height: 2, borderRadius: 1, backgroundColor: theme.colors.surface2 }}
-                />
+                <View style={{ height: 2, backgroundColor: theme.colors.surface2 }} />
               ) : (
                 <View
                   style={{
                     height: Math.max(barHeight, 3),
-                    // Bottom-up: the heaviest agent sits on the baseline.
                     flexDirection: "column-reverse",
                     gap: barHeight > segments.length * 4 ? 1 : 0,
-                    borderTopLeftRadius: 3,
-                    borderTopRightRadius: 3,
+                    borderRadius: 0,
                     overflow: "hidden",
-                    opacity: isSelected ? 1 : 0.45,
+                    opacity: isSelected ? 1 : 0.48,
                   }}
                 >
                   {segments.map((segment) => (
@@ -309,15 +312,16 @@ export function PeriodBars({
               {labelled ? (
                 <Text
                   numberOfLines={1}
-                  style={{
-                    // Wider than its column so "Oct 5" fits; neighbours are unlabelled.
-                    width: 48,
-                    textAlign: "center",
-                    fontSize: 10,
-                    color:
-                      index === selected ? theme.colors.foreground : theme.colors.foregroundMuted,
-                    fontVariant: ["tabular-nums"],
-                  }}
+                  style={[
+                    MONO_TEXT,
+                    {
+                      width: 48,
+                      textAlign: "center",
+                      fontSize: 10,
+                      fontWeight: index === selected ? "700" : "400",
+                      color: index === selected ? theme.colors.accent : theme.colors.foregroundMuted,
+                    },
+                  ]}
                 >
                   {formatPeriodShort(kind, period.period)}
                 </Text>
@@ -330,7 +334,7 @@ export function PeriodBars({
   );
 }
 
-/** One line per agent present in the window: swatch and name. Identity never rests on color alone. */
+/** One line per agent present in the window: swatch and name. */
 export function Legend({
   theme,
   order,
@@ -353,7 +357,7 @@ export function Legend({
       {keys.map((agent) => (
         <View key={agent} style={{ flexDirection: "row", alignItems: "center", gap: 5 }}>
           <SwatchDot swatch={agentSwatch(theme, order, agent)} />
-          <Text style={{ fontSize: 11, color: theme.colors.foregroundMuted }}>
+          <Text style={[MONO_TEXT, { fontSize: 11, color: theme.colors.foregroundMuted }]}>
             {agentLabel(agent)}
           </Text>
         </View>

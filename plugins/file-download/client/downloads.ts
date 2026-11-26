@@ -66,7 +66,7 @@ export function subscribeNotices(listener: (notice: Notice) => void): () => void
   return () => noticeListeners.delete(listener);
 }
 
-export const NOT_A_FILE = "The current tab is not a file. Open a file preview first.";
+export const NOT_A_FILE = "当前标签页不是文件，请先打开一个文件预览。";
 
 /** Downloads the given file tab path in chunks and records it in the history. */
 export async function downloadFile(rpc: Rpc, workspaceId: string, path: string): Promise<void> {
@@ -76,7 +76,7 @@ export async function downloadFile(rpc: Rpc, workspaceId: string, path: string):
     { id, path, name, workspaceId, startedAt: Date.now(), status: "downloading", received: 0, total: 0, error: null },
     ...records,
   ]);
-  notify({ message: `Downloading ${name}`, variant: "info" });
+  notify({ message: `正在下载 ${name}`, variant: "info" });
   let transferId: string | null = null;
   try {
     const transfer = await rpc(openRpc, { workspaceId, path });
@@ -93,20 +93,16 @@ export async function downloadFile(rpc: Rpc, workspaceId: string, path: string):
     }
     saveFile(parts, transfer.name);
     updateRecord(id, { status: "done", received: transfer.size });
-    notify({ message: `Downloaded ${name}`, variant: "success" });
+    notify({ message: `已下载 ${name}`, variant: "success" });
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     updateRecord(id, { status: "failed", error: message });
-    notify({ message: `Could not download ${name}: ${message}`, variant: "error" });
+    notify({ message: `下载失败 ${name}：${message}`, variant: "error" });
   } finally {
     if (transferId) void rpc(closeRpc, { transferId }).catch(() => undefined);
   }
 }
 
-/**
- * The daemon's server ID, fetched once. With several hosts connected, each host's copy of the plugin
- * hears the shortcut; only the one that owns the workspace on screen answers it.
- */
 export function createHostCheck(rpc: Rpc): (serverId: string) => boolean {
   let own: string | null = null;
   void rpc(hostRpc, {})
@@ -115,15 +111,9 @@ export function createHostCheck(rpc: Rpc): (serverId: string) => boolean {
       return undefined;
     })
     .catch(() => undefined);
-  // Until the answer arrives, or if the daemon cannot tell, assume a single host.
   return (serverId) => own === null || own === serverId;
 }
 
-/**
- * Downloads the focused file tab. On any other tab of a workspace it does nothing, silently, but
- * still claims the key so the browser's "save page" dialog stays away. Returns whether it claimed
- * the key: outside a workspace, or on another host's workspace, it leaves the key alone.
- */
 export function downloadFocusedFile(rpc: Rpc, ownsServer: (serverId: string) => boolean): boolean {
   const focused = readFocusedTab();
   if (!focused || !ownsServer(focused.serverId)) return false;

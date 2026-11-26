@@ -14,7 +14,7 @@ import { NotesList, useNotes } from "./notes";
 import { ReviewBox } from "./review";
 import { Timeline } from "./timeline";
 import { downloadFile } from "./transfers";
-import { Badge, Group, IconButton, Kbd, Message, NO_OUTLINE, TextToggle } from "./ui";
+import { Badge, Group, IconButton, Kbd, Message, MONO_TEXT, NO_OUTLINE, TextToggle } from "./ui";
 import {
   StreamPlayer,
   VideoSurface,
@@ -119,17 +119,17 @@ function MediaHeader({
   const { colors } = theme;
   const where = describeLocation(info.path, workspaceRoot);
   return (
-    <View style={{ gap: 6 }}>
+    <View style={{ gap: 6, paddingBottom: 8, borderBottomWidth: 1, borderBottomColor: colors.border }}>
       <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
         <View style={{ flex: 1, gap: 2 }}>
-          <Text numberOfLines={1} style={{ color: colors.foreground, fontSize: 15, fontWeight: "600" }}>
-            {where.name}
+          <Text numberOfLines={1} style={[MONO_TEXT, { color: colors.foreground, fontSize: 14, fontWeight: "700" }]}>
+            <Text style={{ color: colors.accent }}>❯ </Text>{where.name}
           </Text>
           {where.folder || where.host ? (
             <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
               {where.host ? <Badge theme={theme} label={where.host} tone="accent" /> : null}
               {where.folder ? (
-                <Text numberOfLines={1} style={{ color: colors.foregroundMuted, fontSize: 11, flexShrink: 1 }}>
+                <Text numberOfLines={1} style={[MONO_TEXT, { color: colors.foregroundMuted, fontSize: 11, flexShrink: 1 }]}>
                   {where.folder}
                 </Text>
               ) : null}
@@ -140,8 +140,8 @@ function MediaHeader({
       </View>
       <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 4 }}>
         {metaChips(info, mode).map((chip) => (
-          <View key={chip} style={{ height: 20, paddingHorizontal: 7, borderRadius: 5, justifyContent: "center", backgroundColor: colors.surface1 }}>
-            <Text style={{ color: colors.foregroundMuted, fontSize: 11, fontVariant: ["tabular-nums"] }}>{chip}</Text>
+          <View key={chip} style={{ height: 20, paddingHorizontal: 6, borderRadius: 2, borderWidth: 1, borderColor: colors.border, justifyContent: "center", backgroundColor: colors.surface1 }}>
+            <Text style={[MONO_TEXT, { color: colors.foregroundMuted, fontSize: 10 }]}>{chip}</Text>
           </View>
         ))}
       </View>
@@ -154,9 +154,10 @@ const STAGE = "#0d0d10";
 
 function SectionTitle({ theme, label, count, action }: { theme: PluginTheme; label: string; count?: number; action?: ReactNode }) {
   return (
-    <View style={{ flexDirection: "row", alignItems: "center", gap: 6, minHeight: 22 }}>
-      <Text style={{ color: theme.colors.foregroundMuted, fontSize: 11, fontWeight: "700", letterSpacing: 0.6, textTransform: "uppercase" }}>{label}</Text>
-      {count ? <Text style={{ color: theme.colors.foregroundMuted, fontSize: 11, fontVariant: ["tabular-nums"] }}>{count}</Text> : null}
+    <View style={{ flexDirection: "row", alignItems: "center", gap: 6, minHeight: 22, paddingBottom: 4, borderBottomWidth: 1, borderBottomColor: theme.colors.border }}>
+      <Text style={[MONO_TEXT, { color: theme.colors.accent, fontSize: 11, fontWeight: "700" }]}>▸</Text>
+      <Text style={[MONO_TEXT, { color: theme.colors.foregroundMuted, fontSize: 11, fontWeight: "700", letterSpacing: 0.4 }]}>{label}</Text>
+      {count ? <Text style={[MONO_TEXT, { color: theme.colors.foregroundMuted, fontSize: 10 }]}>[{count}]</Text> : null}
       {action ? <View style={{ flex: 1, alignItems: "flex-end" }}>{action}</View> : null}
     </View>
   );
@@ -169,7 +170,7 @@ export function notesAsText(info: MediaInfo, notes: readonly ReviewNote[], headi
     .sort((a, b) => (a.inPoint ?? a.time) - (b.inPoint ?? b.time))
     .map((note) => {
       const when = note.inPoint !== null ? `${tc(note.inPoint)} - ${tc(note.outPoint ?? info.duration ?? note.inPoint)}` : tc(note.time);
-      const stale = note.fileModifiedAt !== info.modifiedAt ? " (earlier version)" : "";
+      const stale = note.fileModifiedAt !== info.modifiedAt ? "（旧版本）" : "";
       return `${when}${stale}  ${note.text}`;
     });
   return [`${info.name} — ${heading} (${notes.length})`, ...lines].join("\n");
@@ -183,18 +184,18 @@ function DetailsTable({ theme, info, workspaceRoot }: { theme: PluginTheme; info
     [t("details.framerate"), formatFps(info.fps) || "-"],
     [t("details.duration"), info.duration ? formatTimecode(info.duration, info.fps) : "-"],
     [t("details.video"), info.videoCodec?.toUpperCase() ?? "-"],
-    [t("details.audio"), info.audioCodec ? `${info.audioCodec.toUpperCase()}${info.sampleRate ? ` · ${Math.round(info.sampleRate / 100) / 10} kHz` : ""}${info.channels ? ` · ${info.channels} ch` : ""}` : "-"],
+    [t("details.audio"), info.audioCodec ? `${info.audioCodec.toUpperCase()}${info.sampleRate ? ` | ${Math.round(info.sampleRate / 100) / 10} kHz` : ""}${info.channels ? ` | ${info.channels} ch` : ""}` : "-"],
     [t("details.bitrate"), info.bitRate ? `${(info.bitRate / 1_000_000).toFixed(1)} Mbps` : "-"],
     [t("details.size"), formatBytes(info.size)],
     [t("details.path"), relativeTo(workspaceRoot, info.path)],
   ];
   return (
-    <View style={{ gap: 6 }}>
+    <View style={{ gap: 5 }}>
       {info.hasAudio ? <LoudnessRow theme={theme} info={info} /> : null}
       {rows.map(([label, value]) => (
         <View key={label} style={{ flexDirection: "row", gap: 10 }}>
-          <Text style={{ color: colors.foregroundMuted, fontSize: 12, width: 78 }}>{label}</Text>
-          <Text selectable numberOfLines={label === rows.at(-1)![0] ? 3 : 1} style={{ color: colors.foreground, fontSize: 12, flex: 1, fontVariant: ["tabular-nums"] }}>
+          <Text style={[MONO_TEXT, { color: colors.foregroundMuted, fontSize: 11, width: 72 }]}>{label}</Text>
+          <Text selectable numberOfLines={label === rows.at(-1)![0] ? 3 : 1} style={[MONO_TEXT, { color: colors.foreground, fontSize: 11, flex: 1 }]}>
             {value}
           </Text>
         </View>
@@ -766,15 +767,19 @@ function Player({ theme, compact, info, workspaceId, workspaceRoot, agentId, var
           flexDirection: "row",
           alignItems: "center",
           gap: 5,
-          height: 30,
-          paddingHorizontal: 8,
-          borderRadius: 7,
+          height: 28,
+          paddingHorizontal: 7,
+          borderRadius: 2,
+          borderWidth: 1,
+          borderColor: value !== null ? colors.accent : "transparent",
           backgroundColor: pressed ? colors.surface2 : "transparent",
         })}
       >
-        <Text style={{ color: value !== null ? colors.accent : colors.foregroundMuted, fontSize: 11, fontWeight: "700" }}>{kind === "in" ? "IN" : "OUT"}</Text>
+        <Text style={[MONO_TEXT, { color: value !== null ? colors.accent : colors.foregroundMuted, fontSize: 11, fontWeight: "700" }]}>
+          {kind === "in" ? "IN" : "OUT"}
+        </Text>
         {value !== null && !inline ? (
-          <Text style={{ color: colors.foreground, fontSize: 12, fontVariant: ["tabular-nums"] }}>{formatTimecodeShort(value, fps, info.duration)}</Text>
+          <Text style={[MONO_TEXT, { color: colors.foreground, fontSize: 11 }]}>{formatTimecodeShort(value, fps, info.duration)}</Text>
         ) : null}
       </Pressable>
     );
@@ -811,13 +816,13 @@ function Player({ theme, compact, info, workspaceId, workspaceRoot, agentId, var
 
       {info.hasVideo ? (
         <View
-          style={fill ? { flex: 1, minHeight: 200, alignItems: "center", justifyContent: "center", backgroundColor: STAGE, borderRadius: 12, overflow: "hidden" } : undefined}
+          style={fill ? { flex: 1, minHeight: 200, alignItems: "center", justifyContent: "center", backgroundColor: STAGE, borderRadius: 2, borderWidth: 1, borderColor: colors.border, overflow: "hidden" } : undefined}
           onLayout={fill ? (event) => setStage({ width: event.nativeEvent.layout.width, height: event.nativeEvent.layout.height }) : undefined}
         >
         <View
           ref={surfaceRef}
           style={[
-            { backgroundColor: "#000", borderRadius: fill ? 0 : inline ? 8 : 10, overflow: "hidden", alignSelf: "center" },
+            { backgroundColor: "#000", borderRadius: fill ? 0 : 2, borderWidth: fill ? 0 : 1, borderColor: colors.border, overflow: "hidden", alignSelf: "center" },
             fill && stage ? fitBox(stage, aspect) : { width: "100%", aspectRatio: aspect, maxHeight },
           ]}
         >
@@ -834,17 +839,17 @@ function Player({ theme, compact, info, workspaceId, workspaceRoot, agentId, var
               style={{ position: "absolute", left: 0, right: 0, top: 0, bottom: 0, alignItems: "center", justifyContent: "center" }}
             >
               {error ? (
-                <View style={{ maxWidth: "80%", padding: 12, borderRadius: 10, backgroundColor: "rgba(0,0,0,0.72)", alignItems: "center", gap: 6 }}>
-                  <Icon name="TriangleAlert" size={20} color={colors.statusDanger} />
-                  <Text style={{ color: "#fff", fontSize: 12, textAlign: "center" }}>{error}</Text>
+                <View style={{ maxWidth: "80%", padding: 12, borderRadius: 2, borderWidth: 1, borderColor: colors.statusDanger, backgroundColor: "rgba(0,0,0,0.82)", alignItems: "center", gap: 6 }}>
+                  <Icon name="TriangleAlert" size={18} color={colors.statusDanger} />
+                  <Text style={[MONO_TEXT, { color: "#fff", fontSize: 11, textAlign: "center" }]}>{error}</Text>
                 </View>
               ) : waiting || !session || pendingSeek !== null ? (
-                <View style={{ width: 52, height: 52, borderRadius: 26, backgroundColor: "rgba(0,0,0,0.45)", alignItems: "center", justifyContent: "center" }}>
+                <View style={{ width: 46, height: 46, borderRadius: 2, borderWidth: 1, borderColor: "rgba(255,255,255,0.25)", backgroundColor: "rgba(0,0,0,0.65)", alignItems: "center", justifyContent: "center" }}>
                   <ActivityIndicator color="#fff" />
                 </View>
               ) : !playing && scrub === null ? (
-                <View style={{ width: inline ? 52 : 64, height: inline ? 52 : 64, borderRadius: 32, backgroundColor: "rgba(0,0,0,0.5)", alignItems: "center", justifyContent: "center" }}>
-                  <Icon name="Play" size={inline ? 22 : 28} color="#fff" />
+                <View style={{ width: inline ? 48 : 56, height: inline ? 48 : 56, borderRadius: 2, borderWidth: 1, borderColor: "rgba(255,255,255,0.3)", backgroundColor: "rgba(0,0,0,0.68)", alignItems: "center", justifyContent: "center" }}>
+                  <Icon name="Play" size={inline ? 20 : 26} color="#fff" />
                 </View>
               ) : null}
             </Pressable>
@@ -917,7 +922,8 @@ function Player({ theme, compact, info, workspaceId, workspaceRoot, agentId, var
             } as object)}
             accessibilityLabel={t("viewer.goto")}
             style={[
-              { width: 132, height: 30, paddingHorizontal: 8, borderRadius: 7, borderWidth: 1, borderColor: colors.accent, color: colors.foreground, fontSize: 14, fontWeight: "600", fontVariant: ["tabular-nums"] },
+              MONO_TEXT,
+              { width: 136, height: 28, paddingHorizontal: 8, borderRadius: 2, borderWidth: 1, borderColor: colors.accent, backgroundColor: colors.surface0, color: colors.foreground, fontSize: 13, fontWeight: "700" },
               NO_OUTLINE,
             ]}
           />
@@ -929,11 +935,11 @@ function Player({ theme, compact, info, workspaceId, workspaceRoot, agentId, var
               video?.pause();
               setGoto(formatTimecode(timeRef.current, fps), true);
             }}
-            style={({ pressed }) => ({ paddingHorizontal: 6, height: 30, justifyContent: "center", borderRadius: 7, backgroundColor: pressed ? colors.surface2 : "transparent" })}
+            style={({ pressed }) => ({ paddingHorizontal: 7, height: 28, justifyContent: "center", borderRadius: 2, borderWidth: 1, borderColor: colors.border, backgroundColor: pressed ? colors.surface2 : colors.surface1 })}
           >
-            <Text style={{ color: colors.foreground, fontSize: inline ? 12 : 14, fontWeight: "600", fontVariant: ["tabular-nums"] }}>
+            <Text style={[MONO_TEXT, { color: colors.foreground, fontSize: inline ? 11 : 13, fontWeight: "700" }]}>
               {formatTimecode(shownTime, fps)}
-              <Text style={{ color: colors.foregroundMuted, fontWeight: "400", fontSize: inline ? 11 : 12 }}> / {formatTimecode(duration, fps)}</Text>
+              <Text style={{ color: colors.foregroundMuted, fontWeight: "400", fontSize: inline ? 10 : 11 }}> / {formatTimecode(duration, fps)}</Text>
             </Text>
           </Pressable>
         )}
@@ -1106,7 +1112,7 @@ function ImageViewer({ theme, compact, info, workspaceId, workspaceRoot, agentId
       ) : !uri ? (
         <Message theme={theme} loading text={t("viewer.loading")} />
       ) : actualSize && info.width && info.height ? (
-        <ScrollView horizontal style={{ maxHeight, borderRadius: 10, backgroundColor: colors.surface1 }}>
+        <ScrollView horizontal style={{ maxHeight, borderRadius: 2, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.surface1 }}>
           <ScrollView style={{ maxHeight }}>
             <Image source={{ uri }} style={{ width: info.width, height: info.height }} />
           </ScrollView>
@@ -1118,19 +1124,19 @@ function ImageViewer({ theme, compact, info, workspaceId, workspaceRoot, agentId
         >
           {stage ? (
             <Pressable onPress={() => setActualSize(true)} accessibilityLabel={t("viewer.actualSize")}>
-              <Image source={{ uri }} resizeMode="contain" style={[fitBox(stage, aspect), { borderRadius: 10, backgroundColor: colors.surface1 }]} />
+              <Image source={{ uri }} resizeMode="contain" style={[fitBox(stage, aspect), { borderRadius: 2, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.surface1 }]} />
             </Pressable>
           ) : null}
         </View>
       ) : (
         <Pressable onPress={() => !inline && setActualSize(true)} accessibilityLabel={t("viewer.actualSize")}>
-          <Image source={{ uri }} resizeMode="contain" style={{ width: "100%", aspectRatio: aspect, maxHeight, borderRadius: inline ? 8 : 10, backgroundColor: colors.surface1 }} />
+          <Image source={{ uri }} resizeMode="contain" style={{ width: "100%", aspectRatio: aspect, maxHeight, borderRadius: 2, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.surface1 }} />
         </Pressable>
       )}
       {inline ? (
         <View style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
-          <Text numberOfLines={1} style={{ color: colors.foregroundMuted, fontSize: 11, flex: 1, fontVariant: ["tabular-nums"] }}>
-            {metaChips(info, null).join("  ·  ")}
+          <Text numberOfLines={1} style={[MONO_TEXT, { color: colors.foregroundMuted, fontSize: 10, flex: 1 }]}>
+            {metaChips(info, null).join(" | ")}
           </Text>
           {actions}
         </View>

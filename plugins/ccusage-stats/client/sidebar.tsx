@@ -26,16 +26,14 @@ import {
   useClaudeLimits,
 } from "./limits";
 import { AgentList, FONT, Headline } from "./summary";
+import { MONO_TEXT } from "./terminal";
 
-// Geometry follows the built-in usage summary and host-monitor in the same footer.
-const ICON_SIZE = 14;
-const ICON_GAP = 6;
-const TEXT_GAP = 8;
+const ICON_SIZE = 13;
+const ICON_GAP = 5;
+const TEXT_GAP = 7;
 const MIN_METER_WIDTH = 24;
-// Below these widths the meter, then the cost, drop out. Estimated from 12px tabular digits.
 const WIDTH_FOR_COST = 120;
 const WIDTH_FOR_METER = 170;
-// Columns shown in the popover for each period kind.
 const POPOVER_PERIODS: Record<PeriodKind, number> = { daily: 14, weekly: 8, monthly: 6 };
 
 type HoverState = PressableStateCallbackType & { hovered?: boolean };
@@ -46,11 +44,13 @@ function triggerStyle(theme: PluginTheme) {
     flexDirection: "row" as const,
     alignItems: "center" as const,
     overflow: "hidden" as const,
-    minHeight: 28,
+    minHeight: 26,
     paddingVertical: 4,
     paddingHorizontal: 8,
-    borderRadius: 8,
-    backgroundColor: hovered ? theme.colors.surface2 : undefined,
+    borderRadius: 2,
+    borderWidth: 1,
+    borderColor: hovered ? theme.colors.border : "transparent",
+    backgroundColor: hovered ? theme.colors.surface2 : theme.colors.surface1,
   });
 }
 
@@ -69,19 +69,18 @@ export function UsageSidebarItem({ theme, openPopover }: PluginSidebarItemProps)
 
   const showUsage = Boolean(data || error);
   const showLimits = limits?.enabled === true;
-  // Like the built-in usage summary: nothing until there is something to show.
   if (!showUsage && !showLimits) return null;
   const today = data ? todayOf(data) : undefined;
   const typical = data ? typicalDay(data.daily) : null;
   const width = available ?? WIDTH_FOR_COST;
   const pace =
     today && typical && !typical.estimated
-      ? `, ${formatPercent(today.usage.cost / typical.cost)} of a typical day`
+      ? `，为典型日的 ${formatPercent(today.usage.cost / typical.cost)}`
       : "";
   const label =
     (today
-      ? `Token usage today: ${formatTokens(today.usage.totalTokens)} tokens${pace}, ${formatCost(today.usage.cost)}`
-      : "Token usage unavailable") + limitsAccessibilityText(limits);
+      ? `今日 Token 用量：${formatTokens(today.usage.totalTokens)} tokens${pace}，估算费用 ${formatCost(today.usage.cost)}`
+      : "Token 用量暂不可用") + limitsAccessibilityText(limits);
 
   return (
     <Pressable
@@ -99,17 +98,19 @@ export function UsageSidebarItem({ theme, openPopover }: PluginSidebarItemProps)
               overflow: "hidden",
             }}
           >
-            <Icon name="Coins" size={ICON_SIZE} color={theme.colors.foregroundMuted} />
+            <Icon name="Coins" size={ICON_SIZE} color={theme.colors.accent} />
             {today && data && typical ? (
               <>
                 <Text
                   numberOfLines={1}
-                  style={{
-                    marginLeft: ICON_GAP,
-                    fontSize: FONT.body,
-                    color: theme.colors.foreground,
-                    fontVariant: ["tabular-nums"],
-                  }}
+                  style={[
+                    MONO_TEXT,
+                    {
+                      marginLeft: ICON_GAP,
+                      fontSize: FONT.body,
+                      color: theme.colors.foreground,
+                    },
+                  ]}
                 >
                   {formatTokens(today.usage.totalTokens)}
                 </Text>
@@ -128,12 +129,14 @@ export function UsageSidebarItem({ theme, openPopover }: PluginSidebarItemProps)
                 {width >= WIDTH_FOR_COST ? (
                   <Text
                     numberOfLines={1}
-                    style={{
-                      marginLeft: TEXT_GAP,
-                      fontSize: FONT.body,
-                      color: theme.colors.foregroundMuted,
-                      fontVariant: ["tabular-nums"],
-                    }}
+                    style={[
+                      MONO_TEXT,
+                      {
+                        marginLeft: TEXT_GAP,
+                        fontSize: FONT.body,
+                        color: theme.colors.foregroundMuted,
+                      },
+                    ]}
                   >
                     {formatCost(today.usage.cost)}
                   </Text>
@@ -142,13 +145,16 @@ export function UsageSidebarItem({ theme, openPopover }: PluginSidebarItemProps)
             ) : (
               <Text
                 numberOfLines={1}
-                style={{
-                  marginLeft: ICON_GAP,
-                  fontSize: FONT.body,
-                  color: theme.colors.foregroundMuted,
-                }}
+                style={[
+                  MONO_TEXT,
+                  {
+                    marginLeft: ICON_GAP,
+                    fontSize: FONT.body,
+                    color: theme.colors.foregroundMuted,
+                  },
+                ]}
               >
-                Usage unavailable
+                用量暂不可用
               </Text>
             )}
           </View>
@@ -164,23 +170,28 @@ export function UsagePopover({ theme, layout, openScreen }: PluginPopoverProps) 
   const [kind, setKind] = useState<PeriodKind>("daily");
   const [picked, setPicked] = useState<number | null>(null);
   const rootStyle = {
-    gap: 12,
-    padding: layout.compact ? 16 : 12,
-    width: layout.compact ? undefined : 320,
+    gap: 10,
+    padding: layout.compact ? 14 : 12,
+    width: layout.compact ? undefined : 332,
     backgroundColor: theme.colors.surface1,
   };
 
   if (!data) {
     return (
       <View style={rootStyle}>
-        <Text style={{ fontSize: FONT.title, color: theme.colors.foreground }}>Token usage</Text>
+        <Text style={[MONO_TEXT, { fontSize: FONT.title, fontWeight: "700", color: theme.colors.foreground }]}>
+          ❯ Token 用量
+        </Text>
         <Text
-          style={{
-            fontSize: FONT.body,
-            color: isPending ? theme.colors.foregroundMuted : theme.colors.statusDanger,
-          }}
+          style={[
+            MONO_TEXT,
+            {
+              fontSize: FONT.body,
+              color: isPending ? theme.colors.foregroundMuted : theme.colors.statusDanger,
+            },
+          ]}
         >
-          {isPending ? "Reading usage logs..." : (error?.message ?? "Usage is unavailable.")}
+          {isPending ? "$ 正在读取用量日志..." : (error?.message ?? "用量数据暂不可用。")}
         </Text>
       </View>
     );
@@ -196,16 +207,30 @@ export function UsagePopover({ theme, layout, openScreen }: PluginPopoverProps) 
 
   return (
     <View style={rootStyle}>
-      <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
-        <Text style={{ flex: 1, fontSize: FONT.title, color: theme.colors.foreground }}>
-          Token usage
+      <View
+        style={{
+          flexDirection: "row",
+          alignItems: "center",
+          gap: 8,
+          paddingBottom: 8,
+          borderBottomWidth: 1,
+          borderBottomColor: theme.colors.border,
+        }}
+      >
+        <Text
+          style={[
+            MONO_TEXT,
+            { flex: 1, fontSize: FONT.title, fontWeight: "700", color: theme.colors.foreground },
+          ]}
+        >
+          <Text style={{ color: theme.colors.accent }}>❯ </Text>Token 用量
         </Text>
         <Segmented
           theme={theme}
           options={PERIOD_OPTIONS}
           value={kind}
           onChange={changeKind}
-          accessibilityLabel="Period"
+          accessibilityLabel="统计周期"
         />
       </View>
       <Headline theme={theme} kind={kind} periods={periods} index={selected} heroSize={22} />
@@ -214,25 +239,35 @@ export function UsagePopover({ theme, layout, openScreen }: PluginPopoverProps) 
           {typicalCaption(typical).map((line) => (
             <Text
               key={line}
-              style={{ fontSize: FONT.caption, color: theme.colors.foregroundMuted }}
+              style={[MONO_TEXT, { fontSize: FONT.caption, color: theme.colors.foregroundMuted }]}
             >
               {line}
             </Text>
           ))}
         </View>
       ) : null}
-      <PeriodBars
-        theme={theme}
-        kind={kind}
-        periods={periods}
-        order={data.agents}
-        selected={selected}
-        onSelect={setPicked}
-        height={52}
-        labelEvery={kind === "daily" ? 7 : kind === "weekly" ? 4 : 3}
-      />
-      <Legend theme={theme} order={data.agents} periods={periods} />
-      <View style={{ height: 1, backgroundColor: theme.colors.border }} />
+      <View
+        style={{
+          padding: 8,
+          borderWidth: 1,
+          borderColor: theme.colors.border,
+          borderRadius: 2,
+          backgroundColor: theme.colors.surface0,
+          gap: 6,
+        }}
+      >
+        <PeriodBars
+          theme={theme}
+          kind={kind}
+          periods={periods}
+          order={data.agents}
+          selected={selected}
+          onSelect={setPicked}
+          height={54}
+          labelEvery={kind === "daily" ? 7 : kind === "weekly" ? 4 : 3}
+        />
+        <Legend theme={theme} order={data.agents} periods={periods} />
+      </View>
       <AgentList theme={theme} order={data.agents} period={periods[selected]} />
       <ClaudeLimitsSection theme={theme} compact />
       <Footer theme={theme} report={data} onMore={() => openScreen({ screenId: "usage" })} />
@@ -240,18 +275,15 @@ export function UsagePopover({ theme, layout, openScreen }: PluginPopoverProps) 
   );
 }
 
-const plural = (count: number, noun: string) => `${count} ${noun}${count === 1 ? "" : "s"}`;
-
-/** The meter's tick, then the long-run daily average it is not. Both at API prices, like the headline. */
 function typicalCaption(typical: TypicalDay): string[] {
   const cost = formatCost(typical.cost);
   if (!typical.average) {
-    return [`Typical day: ${cost} at API prices, a default until there is usage history`];
+    return [`典型日基准 ${cost}（按 API 标价默认估算，待积累历史用量）`];
   }
   const { average } = typical;
   return [
-    `Typical day ${cost} · median of ${plural(typical.activeDays, "active day")} in ${TYPICAL_DAYS}`,
-    `Average ${formatCost(average.cost)}/day over ${plural(average.days, "day")} · ~${formatCost(average.cost * 30)}/month`,
+    `典型日 ${cost} | 近 ${TYPICAL_DAYS} 天中 ${typical.activeDays} 个活跃日中位数`,
+    `日均 ${formatCost(average.cost)}/天（统计 ${average.days} 天）| 折合 ~${formatCost(average.cost * 30)}/月`,
   ];
 }
 
@@ -265,39 +297,42 @@ function Footer({
   onMore(): void;
 }) {
   return (
-    <View style={{ gap: 6 }}>
+    <View style={{ gap: 6, paddingTop: 6, borderTopWidth: 1, borderTopColor: theme.colors.border }}>
       {report.refreshError ? (
         <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
           <Icon name="TriangleAlert" size={12} color={theme.colors.statusWarning} />
           <Text
             numberOfLines={2}
-            style={{ flex: 1, fontSize: FONT.caption, color: theme.colors.statusWarning }}
+            style={[MONO_TEXT, { flex: 1, fontSize: FONT.caption, color: theme.colors.statusWarning }]}
           >
-            Showing older numbers: {report.refreshError}
+            当前展示旧数据：{report.refreshError}
           </Text>
         </View>
       ) : null}
       <View style={{ flexDirection: "row", alignItems: "center" }}>
-        <Text style={{ flex: 1, fontSize: FONT.caption, color: theme.colors.foregroundMuted }}>
-          Updated {formatAgo(report.generatedAt)}
+        <Text style={[MONO_TEXT, { flex: 1, fontSize: FONT.caption, color: theme.colors.foregroundMuted }]}>
+          更新于 {formatAgo(report.generatedAt)}
         </Text>
         <Pressable
           accessibilityRole="button"
-          accessibilityLabel="Open usage details"
+          accessibilityLabel="打开用量详情"
           onPress={onMore}
           style={({ hovered }: HoverState) => ({
             flexDirection: "row" as const,
             alignItems: "center" as const,
-            gap: 2,
+            gap: 4,
             paddingVertical: 3,
-            paddingLeft: 8,
-            paddingRight: 4,
-            borderRadius: 6,
-            backgroundColor: hovered ? theme.colors.surface2 : undefined,
+            paddingHorizontal: 8,
+            borderRadius: 2,
+            borderWidth: 1,
+            borderColor: hovered ? theme.colors.accent : theme.colors.border,
+            backgroundColor: hovered ? theme.colors.surface2 : theme.colors.surface0,
           })}
         >
-          <Text style={{ fontSize: FONT.body, color: theme.colors.foreground }}>Details</Text>
-          <Icon name="ChevronRight" size={14} color={theme.colors.foregroundMuted} />
+          <Text style={[MONO_TEXT, { fontSize: FONT.body, color: theme.colors.foreground }]}>
+            详情
+          </Text>
+          <Icon name="ChevronRight" size={13} color={theme.colors.accent} />
         </Pressable>
       </View>
     </View>

@@ -19,23 +19,24 @@ import {
 } from "../shared/limits";
 import { formatAgo } from "./format";
 import { LIMITS_QUERY_KEY, useClaudeLimits } from "./limits";
+import { MONO_TEXT } from "./terminal";
 
 function statusHint(state: ClaudeLimitsState | undefined): string {
-  if (!state?.enabled) return "Shown once plan limits are on.";
-  if (state.missingClaude) return "Claude Code (claude) was not found on this host.";
-  if (state.refreshing && !state.fetchedAt) return "Running /usage...";
+  if (!state?.enabled) return "开启订阅额度后显示状态。";
+  if (state.missingClaude) return "本机未找到 Claude Code (claude)。";
+  if (state.refreshing && !state.fetchedAt) return "正在执行 /usage...";
   const how =
     state.method === "headless"
-      ? "Read with claude -p /usage."
+      ? "通过 claude -p /usage 读取。"
       : state.method === "interactive"
-        ? "Read from /usage in an interactive Claude Code session."
+        ? "通过交互式 Claude Code 会话 /usage 读取。"
         : "";
   const last = state.error
-    ? ` Last run failed: ${state.error}`
+    ? ` 上次执行失败：${state.error}`
     : state.fetchedAt
-      ? ` Updated ${formatAgo(state.fetchedAt)}.`
+      ? ` 更新于 ${formatAgo(state.fetchedAt)}。`
       : "";
-  return `${how}${last}`.trim() || "Not read yet.";
+  return `${how}${last}`.trim() || "尚未读取。";
 }
 
 export function SettingsScreen({ theme }: PluginSurfaceProps) {
@@ -46,8 +47,8 @@ export function SettingsScreen({ theme }: PluginSurfaceProps) {
 
   if (settings.status !== "ready") {
     return (
-      <Text style={{ color: theme.colors.foregroundMuted }}>
-        {settings.status === "loading" ? "Loading settings..." : settings.error}
+      <Text style={[MONO_TEXT, { color: theme.colors.foregroundMuted }]}>
+        {settings.status === "loading" ? "$ 正在加载设置..." : settings.error}
       </Text>
     );
   }
@@ -64,47 +65,47 @@ export function SettingsScreen({ theme }: PluginSurfaceProps) {
 
   return (
     <View style={{ gap: 24 }}>
-      <SettingsSection title="Claude plan limits">
+      <SettingsSection title="Claude 订阅额度">
         <SettingsCard>
           <SettingsSwitch
-            label="Show Claude plan limits"
-            hint={`Off by default. When on, the daemon runs Claude Code's own /usage command on its host, at most every ${current.minRefreshMinutes} minutes and only while Paseo is open, and shows the 5-hour and weekly limits. Claude Code fetches them from Anthropic with its own sign-in; this plugin never reads your Claude token. /usage runs no model turn and uses none of your plan.`}
+            label="显示 Claude 订阅额度"
+            hint={`默认关闭。开启后，守护进程最多每 ${current.minRefreshMinutes} 分钟在本机执行一次 Claude Code 自带的 /usage（仅在 Paseo 界面打开时触发），以展示 5 小时与每周额度。数据由 Claude Code 使用自身登录获取，插件不读取凭据，且 /usage 不消耗对话额度。`}
             value={current.enabled}
             onValueChange={(enabled) => save({ enabled })}
           />
           <SettingsSelect
-            label="Minimum refresh interval"
-            hint="Applies to manual refreshes too. Failed runs wait longer, up to an hour."
+            label="最短刷新间隔"
+            hint="同时适用于手动刷新。执行失败时退避间隔会自动拉长（最长 1 小时）。"
             value={String(current.minRefreshMinutes)}
             options={MIN_REFRESH_OPTIONS.map((minutes) => ({
               value: String(minutes),
-              label: `${minutes} minutes`,
+              label: `${minutes} 分钟`,
             }))}
             onValueChange={(minutes) => save({ minRefreshMinutes: Number(minutes) })}
           />
           <SettingsSwitch
-            label="Interactive fallback"
-            hint="With a claude setup-token token, claude -p /usage shows no plan limits. Then open /usage in an interactive Claude Code session in a pseudo-terminal (the system script command; Linux and macOS), in an empty folder of its own, and answer Claude Code's folder trust prompt for that folder."
+            label="交互式回退模式"
+            hint="使用 claude setup-token 凭据时，claude -p /usage 不会返回订阅额度。开启后将通过系统 script 命令在独立空目录的伪终端中启动交互式 Claude Code 读取 /usage（支持 Linux 与 macOS）。"
             value={current.interactiveFallback}
             onValueChange={(interactiveFallback) => save({ interactiveFallback })}
           />
           <SettingsInput
-            label="Claude Code path"
-            hint="Empty: claude on the daemon's PATH, ~/.local/bin or ~/.claude/local."
+            label="Claude Code 可执行路径"
+            hint="留空则依次在守护进程 PATH、~/.local/bin 与 ~/.claude/local 中查找 claude。"
             initialValue={current.claudePath}
             placeholder="claude"
             onChangeText={setClaudePath}
           />
           <SettingsAction
-            label={settings.saveError ?? "Save the Claude Code path"}
-            actionLabel="Save"
+            label={settings.saveError ?? "保存 Claude Code 路径"}
+            actionLabel="保存"
             disabled={!pathDirty || settings.saving}
             onPress={() => {
               save({ claudePath: (claudePath ?? "").trim() });
               setClaudePath(null);
             }}
           />
-          <SettingsRow label="Status" hint={statusHint(limits.data)} />
+          <SettingsRow label="运行状态" hint={statusHint(limits.data)} />
         </SettingsCard>
       </SettingsSection>
     </View>

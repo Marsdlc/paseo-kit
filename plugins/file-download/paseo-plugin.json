@@ -1,7 +1,7 @@
 {
   "id": "file-download",
-  "name": "Download file",
-  "description": "Download the file you are previewing with Cmd+S or Ctrl+S, including files outside the workspace",
+  "name": "文件下载",
+  "description": "按 Cmd+S 或 Ctrl+S 快速下载当前预览的文件（支持工作区外文件），并提供终端风格下载记录面板",
   "requirements": {
     "paseo": ">=0.11.1"
   }

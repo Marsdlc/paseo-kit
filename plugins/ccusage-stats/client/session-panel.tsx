@@ -23,13 +23,12 @@ import {
 } from "./format";
 import { Card, Stat } from "./screen";
 import { Composition, FONT } from "./summary";
+import { MONO_TEXT } from "./terminal";
 
 type HoverState = PressableStateCallbackType & { hovered?: boolean };
 
 const MAX_CONTENT_WIDTH = 960;
-// From this width the panel lays its cards out in two columns and shows every token column.
 const WIDE_MIN_WIDTH = 640;
-// Longer lists start collapsed.
 const SUBAGENTS_SHOWN = 6;
 const CHILDREN_SHOWN = 8;
 
@@ -50,25 +49,27 @@ function sumUsage(usages: readonly Usage[]): Usage {
 
 function Muted({ theme, children }: { theme: PluginTheme; children: ReactNode }) {
   return (
-    <Text style={{ fontSize: FONT.caption, color: theme.colors.foregroundMuted }}>{children}</Text>
+    <Text style={[MONO_TEXT, { fontSize: FONT.caption, color: theme.colors.foregroundMuted }]}>
+      {children}
+    </Text>
   );
 }
 
 function Numbers({ theme, usage, share }: { theme: PluginTheme; usage: Usage; share?: number }) {
-  const number = { fontSize: FONT.body, fontVariant: ["tabular-nums" as const] };
+  const number = [MONO_TEXT, { fontSize: FONT.body }];
   return (
     <>
       {share !== undefined ? (
         <Text
-          style={[number, { width: 40, textAlign: "right", color: theme.colors.foregroundMuted }]}
+          style={[...number, { width: 42, textAlign: "right", color: theme.colors.foregroundMuted }]}
         >
           {formatPercent(share)}
         </Text>
       ) : null}
-      <Text style={[number, { width: 52, textAlign: "right", color: theme.colors.foreground }]}>
+      <Text style={[...number, { width: 56, textAlign: "right", color: theme.colors.foreground }]}>
         {formatTokens(usage.totalTokens)}
       </Text>
-      <Text style={[number, { width: 56, textAlign: "right", color: theme.colors.foreground }]}>
+      <Text style={[...number, { width: 58, textAlign: "right", color: theme.colors.foreground }]}>
         {formatCost(usage.cost)}
       </Text>
     </>
@@ -82,6 +83,7 @@ function Row({
   detail,
   usage,
   share,
+  last,
 }: {
   theme: PluginTheme;
   swatch?: Swatch;
@@ -89,18 +91,29 @@ function Row({
   detail?: string | null;
   usage: Usage;
   share?: number;
+  last?: boolean;
 }) {
   return (
-    <View style={{ flexDirection: "row", alignItems: "center", gap: 8, minHeight: 32 }}>
+    <View
+      style={{
+        flexDirection: "row",
+        alignItems: "center",
+        gap: 8,
+        minHeight: 32,
+        paddingVertical: 4,
+        borderBottomWidth: last ? 0 : 1,
+        borderBottomColor: theme.colors.border,
+      }}
+    >
       {swatch ? <SwatchDot swatch={swatch} /> : null}
       <View style={{ flex: 1, minWidth: 0 }}>
-        <Text numberOfLines={1} style={{ fontSize: FONT.body, color: theme.colors.foreground }}>
+        <Text numberOfLines={1} style={[MONO_TEXT, { fontSize: FONT.body, color: theme.colors.foreground }]}>
           {title}
         </Text>
         {detail ? (
           <Text
             numberOfLines={1}
-            style={{ fontSize: FONT.caption, color: theme.colors.foregroundMuted }}
+            style={[MONO_TEXT, { fontSize: FONT.caption, color: theme.colors.foregroundMuted }]}
           >
             {detail}
           </Text>
@@ -112,17 +125,29 @@ function Row({
 }
 
 function ColumnHeader({ theme, share }: { theme: PluginTheme; share?: boolean }) {
-  const label = {
-    fontSize: FONT.caption,
-    color: theme.colors.foregroundMuted,
-    textAlign: "right" as const,
-  };
+  const label = [
+    MONO_TEXT,
+    {
+      fontSize: FONT.caption,
+      color: theme.colors.foregroundMuted,
+      textAlign: "right" as const,
+    },
+  ];
   return (
-    <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+    <View
+      style={{
+        flexDirection: "row",
+        alignItems: "center",
+        gap: 8,
+        paddingBottom: 4,
+        borderBottomWidth: 1,
+        borderBottomColor: theme.colors.border,
+      }}
+    >
       <View style={{ flex: 1 }} />
-      {share ? <Text style={[label, { width: 40 }]}>Share</Text> : null}
-      <Text style={[label, { width: 52 }]}>Tokens</Text>
-      <Text style={[label, { width: 56 }]}>Cost</Text>
+      {share ? <Text style={[...label, { width: 42 }]}>占比</Text> : null}
+      <Text style={[...label, { width: 56 }]}>Token</Text>
+      <Text style={[...label, { width: 58 }]}>费用</Text>
     </View>
   );
 }
@@ -144,7 +169,7 @@ function Notice({
       <View style={{ paddingTop: 1 }}>
         <Icon name={icon} size={13} color={tint} />
       </View>
-      <Text style={{ flex: 1, fontSize: FONT.caption, color: tint }}>{children}</Text>
+      <Text style={[MONO_TEXT, { flex: 1, fontSize: FONT.caption, color: tint }]}>{children}</Text>
     </View>
   );
 }
@@ -166,15 +191,17 @@ function ShowAllToggle({
       onPress={onToggle}
       style={({ hovered }: HoverState) => ({
         alignSelf: "flex-start",
-        marginTop: 4,
-        paddingVertical: 4,
+        marginTop: 6,
+        paddingVertical: 3,
         paddingHorizontal: 8,
-        borderRadius: 6,
-        backgroundColor: hovered ? theme.colors.surface2 : "transparent",
+        borderRadius: 2,
+        borderWidth: 1,
+        borderColor: hovered ? theme.colors.accent : theme.colors.border,
+        backgroundColor: hovered ? theme.colors.surface2 : theme.colors.surface1,
       })}
     >
-      <Text style={{ fontSize: FONT.caption, color: theme.colors.foreground }}>
-        {showAll ? "Show fewer" : `Show all ${total}`}
+      <Text style={[MONO_TEXT, { fontSize: FONT.caption, color: theme.colors.foreground }]}>
+        {showAll ? "[ 收起 ]" : `[ 展开全部 ${total} 项 ]`}
       </Text>
     </Pressable>
   );
@@ -194,32 +221,32 @@ function Overview({
   const prompt = usage.inputTokens + usage.cacheCreationTokens + usage.cacheReadTokens;
   const perMillion = usage.totalTokens > 0 ? usage.cost / (usage.totalTokens / 1_000_000) : 0;
   return (
-    <Card theme={theme} title="This session">
-      <View style={{ flexDirection: "row", flexWrap: "wrap", rowGap: 12, columnGap: 16 }}>
+    <Card theme={theme} title="当前会话">
+      <View style={{ flexDirection: "row", flexWrap: "wrap", rowGap: 10, columnGap: 10 }}>
         <Stat
           theme={theme}
-          label="Cost"
+          label="估算费用"
           value={formatCost(usage.cost)}
-          detail={`${formatCost(perMillion)} per 1M tokens`}
+          detail={`每百万 Token ${formatCost(perMillion)}`}
         />
         <Stat
           theme={theme}
-          label="Tokens"
+          label="Token 总量"
           value={formatTokens(usage.totalTokens)}
-          detail={`${formatTokens(usage.outputTokens)} generated`}
+          detail={`输出 ${formatTokens(usage.outputTokens)}`}
         />
         <Stat
           theme={theme}
-          label="Cache hit rate"
+          label="缓存命中率"
           value={prompt > 0 ? formatPercent(usage.cacheReadTokens / prompt) : "—"}
-          detail="of prompt tokens read from cache"
+          detail="提示词命中缓存占比"
         />
         {childTotal.totalTokens > 0 ? (
           <Stat
             theme={theme}
-            label="With child agents"
+            label="含子 Agent 总计"
             value={formatCost(usage.cost + childTotal.cost)}
-            detail={`+${formatCost(childTotal.cost)} across ${childCount} ${childCount === 1 ? "agent" : "agents"}`}
+            detail={`+${formatCost(childTotal.cost)}（${childCount} 个子 Agent）`}
           />
         ) : null}
       </View>
@@ -239,10 +266,9 @@ function subagentDetail(subagent: SubagentUsage): string {
     subagent.lastActivity ? formatAgo(Date.parse(subagent.lastActivity)) : null,
   ]
     .filter(Boolean)
-    .join(" · ");
+    .join(" | ");
 }
 
-/** The session total split into the main conversation and its Task subagents, plus child agents. */
 function Breakdown({
   theme,
   usage,
@@ -275,61 +301,68 @@ function Breakdown({
   const shown = showAll ? subagents : subagents.slice(0, SUBAGENTS_SHOWN);
 
   return (
-    <Card theme={theme} title="Where it went" trailing={<Muted theme={theme}>Share of cost</Muted>}>
+    <Card theme={theme} title="消耗分布" trailing={<Muted theme={theme}>按费用占比</Muted>}>
       <ShareBar theme={theme} segments={segments} height={8} />
       <View>
         <ColumnHeader theme={theme} share />
         <Row
           theme={theme}
           swatch={swatches.main}
-          title="Main conversation"
+          title="主对话"
           usage={main}
           share={main.cost / grand}
+          last={subagents.length === 0 && childCount === 0}
         />
         {subagents.length > 0 ? (
           <Row
             theme={theme}
             swatch={swatches.subagents}
-            title={`Subagents (${subagents.length})`}
-            detail="Claude Code Task agents"
+            title={`子任务 Agent (${subagents.length})`}
+            detail="Claude Code Task 子代理"
             usage={subagentTotal}
             share={subagentTotal.cost / grand}
+            last={childCount === 0}
           />
         ) : null}
         {childCount > 0 ? (
           <Row
             theme={theme}
             swatch={swatches.children}
-            title={`Child agents (${childCount})`}
-            detail="Started through Paseo"
+            title={`子 Agent (${childCount})`}
+            detail="通过 Paseo 启动"
             usage={childTotal}
             share={childTotal.cost / grand}
+            last
           />
         ) : null}
       </View>
       {subagentsError ? (
         <Notice theme={theme} icon="TriangleAlert" color={theme.colors.statusWarning}>
-          Subagent costs are unavailable: {subagentsError}. The session total still includes them.
+          无法读取子任务费用：{subagentsError}。会话总量中仍已包含此部分。
         </Notice>
       ) : null}
       {subagents.length > 0 ? (
         <View style={{ gap: 2 }}>
           <Text
-            style={{
-              fontSize: FONT.caption,
-              fontWeight: "600",
-              color: theme.colors.foregroundMuted,
-            }}
+            style={[
+              MONO_TEXT,
+              {
+                fontSize: FONT.caption,
+                fontWeight: "700",
+                color: theme.colors.foregroundMuted,
+              },
+            ]}
           >
-            SUBAGENTS
+            // 子任务明细
           </Text>
-          {shown.map((subagent) => (
+          {shown.map((subagent, index) => (
             <Row
               key={subagent.id}
               theme={theme}
               title={subagentTitle(subagent)}
               detail={subagentDetail(subagent)}
               usage={subagent.usage}
+              last={index === shown.length - 1}
             />
           ))}
           {subagents.length > SUBAGENTS_SHOWN ? (
@@ -358,68 +391,90 @@ function Models({
   const columns: { key: string; label: string; value: (usage: Usage) => string; width: number }[] =
     wide
       ? [
-          { key: "input", label: "Input", value: (u) => formatTokens(u.inputTokens), width: 52 },
-          { key: "output", label: "Output", value: (u) => formatTokens(u.outputTokens), width: 52 },
+          { key: "input", label: "输入", value: (u) => formatTokens(u.inputTokens), width: 56 },
+          { key: "output", label: "输出", value: (u) => formatTokens(u.outputTokens), width: 56 },
           {
             key: "write",
-            label: "Cache write",
+            label: "缓存写入",
             value: (u) => formatTokens(u.cacheCreationTokens),
-            width: 72,
+            width: 68,
           },
           {
             key: "read",
-            label: "Cache read",
+            label: "缓存读取",
             value: (u) => formatTokens(u.cacheReadTokens),
-            width: 72,
+            width: 68,
           },
-          { key: "cost", label: "Cost", value: (u) => formatCost(u.cost), width: 56 },
+          { key: "cost", label: "费用", value: (u) => formatCost(u.cost), width: 58 },
         ]
       : [
-          { key: "tokens", label: "Tokens", value: (u) => formatTokens(u.totalTokens), width: 52 },
-          { key: "cost", label: "Cost", value: (u) => formatCost(u.cost), width: 56 },
+          { key: "tokens", label: "Token", value: (u) => formatTokens(u.totalTokens), width: 56 },
+          { key: "cost", label: "费用", value: (u) => formatCost(u.cost), width: 58 },
         ];
-  const cell = {
-    fontSize: FONT.body,
-    textAlign: "right" as const,
-    fontVariant: ["tabular-nums" as const],
-  };
+  const cell = [
+    MONO_TEXT,
+    {
+      fontSize: FONT.body,
+      textAlign: "right" as const,
+    },
+  ];
   return (
-    <Card theme={theme} title="Models">
+    <Card theme={theme} title="模型明细">
       {models.length === 0 ? (
-        <Muted theme={theme}>No model usage recorded.</Muted>
+        <Muted theme={theme}>暂无模型用量记录。</Muted>
       ) : (
-        <View style={{ gap: 6 }}>
-          <View style={{ flexDirection: "row", gap: 8 }}>
-            <View style={{ flex: 1 }} />
+        <View style={{ gap: 2 }}>
+          <View
+            style={{
+              flexDirection: "row",
+              gap: 8,
+              paddingBottom: 4,
+              borderBottomWidth: 1,
+              borderBottomColor: theme.colors.border,
+            }}
+          >
+            <Text style={[MONO_TEXT, { flex: 1, fontSize: FONT.caption, color: theme.colors.foregroundMuted }]}>
+              模型
+            </Text>
             {columns.map((column) => (
               <Text
                 key={column.key}
-                style={{
-                  width: column.width,
-                  fontSize: FONT.caption,
-                  color: theme.colors.foregroundMuted,
-                  textAlign: "right",
-                }}
+                style={[
+                  MONO_TEXT,
+                  {
+                    width: column.width,
+                    fontSize: FONT.caption,
+                    color: theme.colors.foregroundMuted,
+                    textAlign: "right",
+                  },
+                ]}
               >
                 {column.label}
               </Text>
             ))}
           </View>
-          {models.map((model) => (
+          {models.map((model, index) => (
             <View
               key={model.model}
-              style={{ flexDirection: "row", alignItems: "center", gap: 8, minHeight: 24 }}
+              style={{
+                flexDirection: "row",
+                alignItems: "center",
+                gap: 8,
+                minHeight: 28,
+                borderBottomWidth: index === models.length - 1 ? 0 : 1,
+                borderBottomColor: theme.colors.border,
+              }}
             >
               <Text
                 numberOfLines={1}
-                style={{ flex: 1, fontSize: FONT.body, color: theme.colors.foreground }}
+                style={[MONO_TEXT, { flex: 1, fontSize: FONT.body, color: theme.colors.foreground }]}
               >
                 {model.model}
               </Text>
               {columns.map((column) => (
                 <Text
                   key={column.key}
-                  style={[cell, { width: column.width, color: theme.colors.foreground }]}
+                  style={[...cell, { width: column.width, color: theme.colors.foreground }]}
                 >
                   {column.value(model.usage)}
                 </Text>
@@ -434,14 +489,14 @@ function Models({
 
 function childStatus(child: ChildAgentUsage): string {
   const parts = [agentLabel(child.provider)];
-  if (child.unlisted) parts.push("project removed");
-  else if (child.archived) parts.push("archived");
-  if (child.match.status === "pending") parts.push("no usage recorded yet");
-  if (child.match.status === "unknown") parts.push("no provider session");
+  if (child.unlisted) parts.push("项目已移除");
+  else if (child.archived) parts.push("已归档");
+  if (child.match.status === "pending") parts.push("暂无用量记录");
+  if (child.match.status === "unknown") parts.push("无 provider 会话");
   if (child.match.status === "matched" && child.match.session.lastActivity) {
     parts.push(formatAgo(Date.parse(child.match.session.lastActivity)));
   }
-  return parts.join(" · ");
+  return parts.join(" | ");
 }
 
 function Children({
@@ -454,20 +509,20 @@ function Children({
   const [showAll, setShowAll] = useState(false);
   const shown = showAll ? children : children.slice(0, CHILDREN_SHOWN);
   return (
-    <Card theme={theme} title={`Child agents (${children.length})`}>
+    <Card theme={theme} title={`子 Agent (${children.length})`}>
       <Muted theme={theme}>
-        Agents this agent started through Paseo. Each has its own session, so their usage is not
-        part of this session's total.
+        由当前 Agent 通过 Paseo 启动的子 Agent。它们各自独立会话，不包含在当前会话总量内。
       </Muted>
       <View>
         <ColumnHeader theme={theme} />
-        {shown.map((child) => (
+        {shown.map((child, index) => (
           <Row
             key={child.agentId}
             theme={theme}
-            title={child.title ?? "Untitled agent"}
+            title={child.title ?? "未命名 Agent"}
             detail={childStatus(child)}
             usage={child.match.status === "matched" ? child.match.session.usage : EMPTY_USAGE}
+            last={index === shown.length - 1}
           />
         ))}
       </View>
@@ -488,25 +543,30 @@ function Header({ theme, detail }: { theme: PluginTheme; detail: SessionDetail }
   const facts =
     match.status === "matched"
       ? [
-          `${agentLabel(match.session.agent)} session ${shortSessionId(match.providerSessionId)}`,
+          `${agentLabel(match.session.agent)} #${shortSessionId(match.providerSessionId)}`,
           match.session.lastActivity
-            ? `last activity ${formatAgo(Date.parse(match.session.lastActivity))}`
+            ? `最近活跃 ${formatAgo(Date.parse(match.session.lastActivity))}`
             : null,
         ]
       : match.status === "pending"
-        ? [`Session ${shortSessionId(match.providerSessionId)}`]
+        ? [`会话 #${shortSessionId(match.providerSessionId)}`]
         : [];
   return (
-    <View style={{ gap: 4 }}>
-      <Text style={{ fontSize: 16, fontWeight: "600", color: theme.colors.foreground }}>
-        Session usage
+    <View
+      style={{
+        gap: 4,
+        paddingBottom: 10,
+        borderBottomWidth: 1,
+        borderBottomColor: theme.colors.border,
+      }}
+    >
+      <Text style={[MONO_TEXT, { fontSize: 15, fontWeight: "700", color: theme.colors.foreground }]}>
+        <Text style={{ color: theme.colors.accent }}>$ </Text>会话用量
       </Text>
-      {facts.length > 0 ? <Muted theme={theme}>{facts.filter(Boolean).join(" · ")}</Muted> : null}
+      {facts.length > 0 ? <Muted theme={theme}>{facts.filter(Boolean).join(" | ")}</Muted> : null}
       {match.status === "matched" && match.earlierSegments > 0 ? (
         <Notice theme={theme} icon="History">
-          Includes {match.earlierSegments} earlier{" "}
-          {match.earlierSegments === 1 ? "session" : "sessions"} this conversation was resumed or
-          forked from.
+          已合并此前 {match.earlierSegments} 段历史会话（由恢复或分叉延续）。
         </Notice>
       ) : null}
     </View>
@@ -533,11 +593,11 @@ function Body({
   if (match.status !== "matched") {
     return (
       <View style={{ gap: 12 }}>
-        <Card theme={theme} title="This session">
+        <Card theme={theme} title="当前会话">
           <Muted theme={theme}>
             {match.status === "pending"
-              ? "No usage recorded yet. ccusage reads Claude Code, Codex and other supported agents' logs; usage appears after the first turn."
-              : "This agent has not started a provider session yet."}
+              ? "暂无用量记录。ccusage 会读取 Claude Code、Codex 等支持的 Agent 日志，首轮对话结束后即可显示。"
+              : "当前 Agent 尚未启动 provider 会话。"}
           </Muted>
         </Card>
         {childCard}
@@ -572,7 +632,6 @@ function Body({
       </View>
     );
   }
-  // Wide: the split and the child agents side by side, then the model table across the panel.
   return (
     <View style={{ gap: 12 }}>
       {overview}
@@ -589,7 +648,6 @@ function Body({
   );
 }
 
-/** The agent panel the session pill opens. */
 export function SessionUsagePanel({ theme, layout, agentId }: PluginAgentPanelProps) {
   const { data, error, isPending } = useSessionDetail(agentId);
   const [width, setWidth] = useState(0);
@@ -608,8 +666,8 @@ export function SessionUsagePanel({ theme, layout, agentId }: PluginAgentPanelPr
             <Header theme={theme} detail={data} />
             <Body theme={theme} detail={data} wide={!layout.compact && width >= WIDE_MIN_WIDTH} />
             <Muted theme={theme}>
-              Read by ccusage from local agent logs on this host. Costs are estimates from ccusage's
-              built-in pricing table, not your bill. Updated {formatAgo(data.generatedAt)}.
+              # 数据由 ccusage 从本机 Agent 日志读取，费用为内置标价估算。更新于{" "}
+              {formatAgo(data.generatedAt)}。
             </Muted>
           </>
         ) : (
@@ -620,9 +678,12 @@ export function SessionUsagePanel({ theme, layout, agentId }: PluginAgentPanelPr
               color={isPending ? theme.colors.foregroundMuted : theme.colors.statusDanger}
             />
             <Text
-              style={{ fontSize: FONT.title, color: theme.colors.foreground, textAlign: "center" }}
+              style={[
+                MONO_TEXT,
+                { fontSize: FONT.title, color: theme.colors.foreground, textAlign: "center" },
+              ]}
             >
-              {isPending ? "Reading usage logs..." : "Could not read usage"}
+              {isPending ? "$ 正在读取用量日志..." : "无法读取会话用量"}
             </Text>
             {error ? <Muted theme={theme}>{error.message}</Muted> : null}
           </View>

@@ -25,18 +25,19 @@ import {
   useHostStats,
   type Severity,
 } from "./stats";
+import { MONO_TEXT } from "./terminal";
 
-// Geometry follows the built-in usage summary in the same footer.
-const ICON_SIZE = 14;
-const FONT_SIZE = 12;
-const ICON_GAP = 6;
-const METRIC_GAP = 10;
+// Compact terminal status-bar geometry.
+const ICON_SIZE = 13;
+const FONT_SIZE = 11;
+const ICON_GAP = 5;
+const METRIC_GAP = 9;
 const MIN_METER_WIDTH = 16;
 const METER_GAP = 4;
-const METER_HEIGHT = 6;
+const METER_HEIGHT = 7;
 // Between the download and upload numbers that share one icon.
 const PAIR_SEPARATOR = "/";
-const PAIR_SEPARATOR_WIDTH = 8;
+const PAIR_SEPARATOR_WIDTH = 7;
 
 type HostStats = RpcOutput<typeof hostStatsRpc>;
 
@@ -57,6 +58,12 @@ interface Metric {
   /** Sets the color of a metric with a percent. */
   severity?: Severity;
 }
+
+const PRESSURE_LABEL: Record<Severity, string> = {
+  normal: "正常",
+  warning: "偏高",
+  critical: "紧缺",
+};
 
 // On a narrow sidebar, network goes first, then disk; CPU and RAM always stay.
 const DROP_ORDER: readonly MetricKey[] = ["network", "disk"];
@@ -121,7 +128,7 @@ function MetricLine({
       metric.severity !== undefined && metric.severity !== "normal"
         ? severityColor(theme, metric.severity)
         : theme.colors.foreground;
-    const textStyle = { color: valueColor, fontSize: FONT_SIZE, fontVariant: ["tabular-nums" as const] };
+    const textStyle = [MONO_TEXT, { color: valueColor, fontSize: FONT_SIZE }];
     const [first, second] = metric.texts;
     return (
       <View
@@ -130,7 +137,6 @@ function MetricLine({
           flexDirection: "row",
           alignItems: "center",
           marginLeft: index === 0 ? 0 : METRIC_GAP,
-          // Meter slots share the leftover width, so the line fills the row.
           flexGrow: metered ? 1 : 0,
           flexShrink: metered ? 1 : 0,
         }}
@@ -145,8 +151,6 @@ function MetricLine({
             style={{ flexGrow: 1, flexShrink: 1, flexBasis: 0, minWidth: MIN_METER_WIDTH, marginLeft: ICON_GAP }}
           />
         ) : null}
-        {/* Fixed slots: changing digits never move anything around them. A lone number sits
-            right-aligned; a pair hugs the separator between them. */}
         <Text
           numberOfLines={1}
           style={[textStyle, { width: slotWidth, marginLeft: metered ? METER_GAP : TEXT_GAP, textAlign: "right" }]}
@@ -156,12 +160,15 @@ function MetricLine({
         {second !== undefined ? (
           <>
             <Text
-              style={{
-                width: PAIR_SEPARATOR_WIDTH,
-                textAlign: "center",
-                color: theme.colors.foregroundMuted,
-                fontSize: FONT_SIZE,
-              }}
+              style={[
+                MONO_TEXT,
+                {
+                  width: PAIR_SEPARATOR_WIDTH,
+                  textAlign: "center",
+                  color: theme.colors.foregroundMuted,
+                  fontSize: FONT_SIZE,
+                },
+              ]}
             >
               {PAIR_SEPARATOR}
             </Text>
@@ -206,11 +213,13 @@ function triggerStyle(theme: PluginTheme) {
     flexDirection: "row" as const,
     alignItems: "center" as const,
     overflow: "hidden" as const,
-    minHeight: 28,
+    minHeight: 26,
     paddingVertical: 4,
     paddingHorizontal: 8,
-    borderRadius: 8,
-    backgroundColor: hovered ? theme.colors.surface2 : undefined,
+    borderRadius: 2,
+    borderWidth: 1,
+    borderColor: hovered ? theme.colors.border : "transparent",
+    backgroundColor: hovered ? theme.colors.surface2 : theme.colors.surface1,
   });
 }
 
@@ -218,17 +227,17 @@ function describe(stats: HostStats): string {
   const { current, memory, network, disks } = stats;
   const parts = [
     `CPU ${formatPercent(current.cpuPercent)}`,
-    `memory ${formatPercent(memoryPercent(memory))}`,
+    `内存 ${formatPercent(memoryPercent(memory))}`,
   ];
-  if (memory.pressure) parts.push(`memory pressure ${memory.pressure}`);
-  if (disks.length > 0) parts.push(`disk ${formatPercent(sumDisks(disks).percent)}`);
+  if (memory.pressure) parts.push(`内存压力 ${PRESSURE_LABEL[memory.pressure]}`);
+  if (disks.length > 0) parts.push(`磁盘 ${formatPercent(sumDisks(disks).percent)}`);
   if (network) {
     parts.push(
-      `download ${formatRate(current.rxBytesPerSec)}`,
-      `upload ${formatRate(current.txBytesPerSec)}`,
+      `下载 ${formatRate(current.rxBytesPerSec)}`,
+      `上传 ${formatRate(current.txBytesPerSec)}`,
     );
   }
-  return `Host status: ${parts.join(", ")}`;
+  return `主机状态：${parts.join("，")}`;
 }
 
 function layoutWidth(event: LayoutChangeEvent): number {
@@ -245,7 +254,6 @@ export function HostStatusItem({ theme, openPopover }: PluginSidebarItemProps) {
     setMeasuredSlot((current) => Math.max(current ?? 0, width));
   }, []);
 
-  // Like the built-in usage summary: nothing until there is something to show.
   if (!data) return null;
   const metrics = metricsOf(data);
   const slotWidth = measuredSlot ?? ESTIMATED_SLOT_WIDTH;
@@ -264,7 +272,6 @@ export function HostStatusItem({ theme, openPopover }: PluginSidebarItemProps) {
       >
         <MetricLine theme={theme} layout={layout} slotWidth={slotWidth} />
       </View>
-      {/* Off-screen templates fix the slot width once, independent of live values. */}
       <View
         pointerEvents="none"
         accessibilityElementsHidden
@@ -275,7 +282,7 @@ export function HostStatusItem({ theme, openPopover }: PluginSidebarItemProps) {
           <Text
             key={template}
             onLayout={onTemplate}
-            style={{ alignSelf: "flex-start", fontSize: FONT_SIZE, fontVariant: ["tabular-nums"] }}
+            style={[MONO_TEXT, { alignSelf: "flex-start", fontSize: FONT_SIZE }]}
           >
             {template}
           </Text>
@@ -298,20 +305,33 @@ interface PreviewRowProps {
 
 function PreviewRow({ theme, icon, label, value, color, values, detail }: PreviewRowProps) {
   return (
-    <View style={{ gap: 4 }}>
+    <View
+      style={{
+        gap: 5,
+        padding: 8,
+        borderWidth: 1,
+        borderColor: theme.colors.border,
+        borderRadius: 2,
+        backgroundColor: theme.colors.surface0,
+      }}
+    >
       <View style={{ flexDirection: "row", alignItems: "center", gap: ICON_GAP }}>
-        <Icon name={icon} size={ICON_SIZE} color={theme.colors.foregroundMuted} />
-        <Text style={{ flex: 1, color: theme.colors.foregroundMuted, fontSize: FONT_SIZE }}>
+        <Icon name={icon} size={ICON_SIZE} color={color} />
+        <Text style={[MONO_TEXT, { flex: 1, color: theme.colors.foregroundMuted, fontSize: FONT_SIZE }]}>
           {label}
         </Text>
-        <Text
-          style={{ color: theme.colors.foreground, fontSize: FONT_SIZE, fontVariant: ["tabular-nums"] }}
-        >
+        <Text style={[MONO_TEXT, { color: theme.colors.foreground, fontSize: FONT_SIZE, fontWeight: "700" }]}>
           {value}
         </Text>
       </View>
       {detail ? <Caption theme={theme} text={detail} /> : null}
-      <Sparkline values={values} color={color} height={18} />
+      <Sparkline
+        values={values}
+        color={color}
+        height={18}
+        borderColor={theme.colors.border}
+        backgroundColor={theme.colors.surface1}
+      />
     </View>
   );
 }
@@ -319,7 +339,10 @@ function PreviewRow({ theme, icon, label, value, color, values, detail }: Previe
 function Caption({ theme, text }: { theme: PluginTheme; text: string }) {
   return (
     <Text
-      style={{ paddingLeft: ICON_SIZE + ICON_GAP, color: theme.colors.foregroundMuted, fontSize: FONT_SIZE - 1 }}
+      style={[
+        MONO_TEXT,
+        { paddingLeft: ICON_SIZE + ICON_GAP, color: theme.colors.foregroundMuted, fontSize: FONT_SIZE - 1 },
+      ]}
     >
       {text}
     </Text>
@@ -329,62 +352,62 @@ function Caption({ theme, text }: { theme: PluginTheme; text: string }) {
 /** macOS: what the RAM figure leaves out, and the pressure that colors it. */
 function memoryDetail(memory: HostStats["memory"]): string | undefined {
   const parts: string[] = [];
-  if (memory.cachedBytes !== null) parts.push(`Cached files ${formatBytes(memory.cachedBytes)}`);
-  if (memory.pressure !== null) parts.push(`pressure ${memory.pressure}`);
-  return parts.length > 0 ? parts.join(" · ") : undefined;
+  if (memory.cachedBytes !== null) parts.push(`文件缓存 ${formatBytes(memory.cachedBytes)}`);
+  if (memory.pressure !== null) parts.push(`压力 ${PRESSURE_LABEL[memory.pressure]}`);
+  return parts.length > 0 ? parts.join(" | ") : undefined;
 }
 
 function DiskSection({ theme, disks }: { theme: PluginTheme; disks: HostStats["disks"] }) {
   const total = sumDisks(disks);
   return (
-    <View style={{ gap: 6 }}>
+    <View
+      style={{
+        gap: 6,
+        padding: 8,
+        borderWidth: 1,
+        borderColor: theme.colors.border,
+        borderRadius: 2,
+        backgroundColor: theme.colors.surface0,
+      }}
+    >
       <View style={{ flexDirection: "row", alignItems: "center", gap: ICON_GAP }}>
-        <Icon name="HardDrive" size={ICON_SIZE} color={theme.colors.foregroundMuted} />
-        <Text style={{ flex: 1, color: theme.colors.foregroundMuted, fontSize: FONT_SIZE }}>
-          Disk · {formatBytes(total.usedBytes)} / {formatBytes(total.totalBytes)}
+        <Icon name="HardDrive" size={ICON_SIZE} color={loadColor(theme, total.percent)} />
+        <Text style={[MONO_TEXT, { flex: 1, color: theme.colors.foregroundMuted, fontSize: FONT_SIZE }]}>
+          磁盘 | {formatBytes(total.usedBytes)} / {formatBytes(total.totalBytes)}
         </Text>
-        <Text
-          style={{ color: theme.colors.foreground, fontSize: FONT_SIZE, fontVariant: ["tabular-nums"] }}
-        >
+        <Text style={[MONO_TEXT, { color: theme.colors.foreground, fontSize: FONT_SIZE, fontWeight: "700" }]}>
           {formatPercent(total.percent)}
         </Text>
       </View>
-      {/* statfs on an APFS volume counts every volume sharing its container, so say so: Finder and
-          other tools often show the data volume alone. */}
       {disks.some((disk) => disk.fsType === "apfs") ? (
-        <Caption theme={theme} text="APFS container: all volumes sharing it" />
+        <Caption theme={theme} text="APFS 容器：包含共享该容器的所有宗卷" />
       ) : null}
-      {/* A single disk is the total itself: its meter, not a repeat of the same numbers. */}
-      {disks.length === 1 ? <Meter theme={theme} percent={total.percent} height={METER_HEIGHT - 2} /> : null}
-      {disks.length > 1 ? disks.map((disk) => {
-        const percent = diskPercent(disk);
-        return (
-          <View key={disk.mount} style={{ gap: 3, paddingLeft: ICON_SIZE + ICON_GAP }}>
-            <View style={{ flexDirection: "row", alignItems: "center", gap: ICON_GAP }}>
-              <Text
-                numberOfLines={1}
-                ellipsizeMode="middle"
-                style={{ flex: 1, color: theme.colors.foreground, fontSize: FONT_SIZE - 1 }}
-              >
-                {disk.mount}
-              </Text>
-              <Text
-                style={{
-                  color: theme.colors.foregroundMuted,
-                  fontSize: FONT_SIZE - 1,
-                  fontVariant: ["tabular-nums"],
-                }}
-              >
-                {formatBytes(disk.usedBytes)} / {formatBytes(disk.totalBytes)} ·{" "}
-                <Text style={{ color: percent >= 70 ? loadColor(theme, percent) : theme.colors.foreground }}>
-                  {formatPercent(percent)}
-                </Text>
-              </Text>
-            </View>
-            <Meter theme={theme} percent={percent} height={METER_HEIGHT - 2} />
-          </View>
-        );
-      }) : null}
+      {disks.length === 1 ? <Meter theme={theme} percent={total.percent} height={METER_HEIGHT} /> : null}
+      {disks.length > 1
+        ? disks.map((disk) => {
+            const percent = diskPercent(disk);
+            return (
+              <View key={disk.mount} style={{ gap: 3, paddingLeft: ICON_SIZE + ICON_GAP }}>
+                <View style={{ flexDirection: "row", alignItems: "center", gap: ICON_GAP }}>
+                  <Text
+                    numberOfLines={1}
+                    ellipsizeMode="middle"
+                    style={[MONO_TEXT, { flex: 1, color: theme.colors.foreground, fontSize: FONT_SIZE - 1 }]}
+                  >
+                    {disk.mount}
+                  </Text>
+                  <Text style={[MONO_TEXT, { color: theme.colors.foregroundMuted, fontSize: FONT_SIZE - 1 }]}>
+                    {formatBytes(disk.usedBytes)} / {formatBytes(disk.totalBytes)} |{" "}
+                    <Text style={{ color: percent >= 70 ? loadColor(theme, percent) : theme.colors.foreground }}>
+                      {formatPercent(percent)}
+                    </Text>
+                  </Text>
+                </View>
+                <Meter theme={theme} percent={percent} height={METER_HEIGHT - 1} />
+              </View>
+            );
+          })
+        : null}
     </View>
   );
 }
@@ -392,15 +415,17 @@ function DiskSection({ theme, disks }: { theme: PluginTheme; disks: HostStats["d
 function HostPopover({ theme, layout }: PluginPopoverProps) {
   const { data } = useHostStats();
   const rootStyle = {
-    gap: 10,
-    padding: layout.compact ? 16 : 12,
-    minWidth: 240,
+    gap: 8,
+    padding: layout.compact ? 14 : 10,
+    minWidth: 272,
     backgroundColor: theme.colors.surface1,
   };
   if (!data) {
     return (
       <View style={rootStyle}>
-        <Text style={{ color: theme.colors.foregroundMuted, fontSize: FONT_SIZE }}>Loading...</Text>
+        <Text style={[MONO_TEXT, { color: theme.colors.foregroundMuted, fontSize: FONT_SIZE }]}>
+          $ 正在读取主机状态...
+        </Text>
       </View>
     );
   }
@@ -409,17 +434,48 @@ function HostPopover({ theme, layout }: PluginPopoverProps) {
 
   return (
     <View style={rootStyle}>
-      <View style={{ gap: 2 }}>
-        <Text style={{ color: theme.colors.foreground, fontSize: FONT_SIZE + 1 }}>{data.hostname}</Text>
-        <Text style={{ color: theme.colors.foregroundMuted, fontSize: FONT_SIZE - 1 }}>
-          up {formatUptime(data.uptimeSeconds)} · load{" "}
+      <View
+        style={{
+          gap: 3,
+          paddingBottom: 8,
+          borderBottomWidth: 1,
+          borderBottomColor: theme.colors.border,
+        }}
+      >
+        <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
+          <Text style={[MONO_TEXT, { color: theme.colors.accent, fontSize: FONT_SIZE + 1, fontWeight: "700" }]}>
+            ❯
+          </Text>
+          <Text
+            numberOfLines={1}
+            style={[MONO_TEXT, { flex: 1, color: theme.colors.foreground, fontSize: FONT_SIZE + 1, fontWeight: "700" }]}
+          >
+            {data.hostname}
+          </Text>
+          <View
+            style={{
+              paddingHorizontal: 5,
+              paddingVertical: 1,
+              borderWidth: 1,
+              borderColor: theme.colors.border,
+              borderRadius: 2,
+              backgroundColor: theme.colors.surface0,
+            }}
+          >
+            <Text style={[MONO_TEXT, { color: theme.colors.statusSuccess, fontSize: FONT_SIZE - 2, fontWeight: "700" }]}>
+              ONLINE
+            </Text>
+          </View>
+        </View>
+        <Text style={[MONO_TEXT, { color: theme.colors.foregroundMuted, fontSize: FONT_SIZE - 1 }]}>
+          运行 {formatUptime(data.uptimeSeconds)} | 负载{" "}
           {data.loadAverage.map((n) => n.toFixed(2)).join(" ")}
         </Text>
       </View>
       <PreviewRow
         theme={theme}
         icon="Cpu"
-        label={`CPU · ${data.cpuCount} cores`}
+        label={`CPU | ${data.cpuCount} 核`}
         value={formatPercent(current.cpuPercent)}
         color={loadColor(theme, current.cpuPercent)}
         values={history.map((s) => s.cpuPercent)}
@@ -427,7 +483,7 @@ function HostPopover({ theme, layout }: PluginPopoverProps) {
       <PreviewRow
         theme={theme}
         icon="MemoryStick"
-        label={`RAM · ${formatBytes(memory.usedBytes)} / ${formatBytes(memory.totalBytes)}`}
+        label={`内存 | ${formatBytes(memory.usedBytes)} / ${formatBytes(memory.totalBytes)}`}
         value={formatPercent(memoryPercent(memory))}
         color={severityColor(theme, memorySeverity(memory))}
         values={history.map((s) => s.memoryPercent)}
@@ -438,7 +494,7 @@ function HostPopover({ theme, layout }: PluginPopoverProps) {
           <PreviewRow
             theme={theme}
             icon="ArrowDown"
-            label="Download"
+            label="下载速率 (RX)"
             value={formatRate(current.rxBytesPerSec)}
             color={theme.colors.accent}
             values={scaleToPeak(history, (s) => s.rxBytesPerSec)}
@@ -446,7 +502,7 @@ function HostPopover({ theme, layout }: PluginPopoverProps) {
           <PreviewRow
             theme={theme}
             icon="ArrowUp"
-            label="Upload"
+            label="上传速率 (TX)"
             value={formatRate(current.txBytesPerSec)}
             color={theme.colors.accent}
             values={scaleToPeak(history, (s) => s.txBytesPerSec)}

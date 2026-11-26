@@ -1,7 +1,6 @@
 import type { PeriodKind } from "../shared/usage";
 
-const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-const WEEKDAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+const WEEKDAYS = ["周日", "周一", "周二", "周三", "周四", "周五", "周六"];
 
 /** "999", "345K", "28.0M", "1.26B": three significant digits, never more than five characters. */
 export function formatTokens(tokens: number): string {
@@ -39,44 +38,44 @@ function parseKey(key: string): { year: number; month: number; day: number } {
   return { year, month, day };
 }
 
-/** Axis labels: "12", "Oct 5", "Oct". */
+/** Axis labels: "12", "10/5", "10月". */
 export function formatPeriodShort(kind: PeriodKind, key: string): string {
   const { month, day } = parseKey(key);
-  if (kind === "monthly") return MONTHS[month - 1] ?? key;
-  if (kind === "weekly") return `${MONTHS[month - 1]} ${day}`;
+  if (kind === "monthly") return `${month}月`;
+  if (kind === "weekly") return `${month}/${day}`;
   return `${day}`;
 }
 
-/** Headline labels: "Mon, Oct 12", "Week of Oct 5", "October 2026". */
+/** Headline labels: "10月12日 周一", "10月5日 当周", "2026年10月". */
 export function formatPeriodLong(kind: PeriodKind, key: string): string {
   const { year, month, day } = parseKey(key);
-  if (kind === "monthly") return `${MONTHS[month - 1]} ${year}`;
-  if (kind === "weekly") return `Week of ${MONTHS[month - 1]} ${day}`;
+  if (kind === "monthly") return `${year}年${month}月`;
+  if (kind === "weekly") return `${month}月${day}日 当周`;
   const weekday = WEEKDAYS[new Date(Date.UTC(year, month - 1, day)).getUTCDay()];
-  return `${weekday}, ${MONTHS[month - 1]} ${day}`;
+  return `${month}月${day}日 ${weekday}`;
 }
 
 export const CURRENT_LABEL: Record<PeriodKind, string> = {
-  daily: "Today",
-  weekly: "This week",
-  monthly: "This month",
+  daily: "今日",
+  weekly: "本周",
+  monthly: "本月",
 };
 
 export const PREVIOUS_LABEL: Record<PeriodKind, string> = {
-  daily: "yesterday",
-  weekly: "last week",
-  monthly: "last month",
+  daily: "昨日",
+  weekly: "上周",
+  monthly: "上月",
 };
 
 export function formatAgo(timestamp: number, now = Date.now()): string {
   const seconds = Math.max(0, Math.round((now - timestamp) / 1000));
-  if (seconds < 10) return "just now";
-  if (seconds < 60) return `${seconds}s ago`;
+  if (seconds < 10) return "刚刚";
+  if (seconds < 60) return `${seconds}秒前`;
   const minutes = Math.round(seconds / 60);
-  if (minutes < 60) return `${minutes}m ago`;
+  if (minutes < 60) return `${minutes}分钟前`;
   const hours = Math.round(minutes / 60);
-  if (hours < 48) return `${hours}h ago`;
-  return `${Math.round(hours / 24)}d ago`;
+  if (hours < 48) return `${hours}小时前`;
+  return `${Math.round(hours / 24)}天前`;
 }
 
 const AGENT_LABELS: Record<string, string> = {
@@ -98,6 +97,7 @@ const AGENT_LABELS: Record<string, string> = {
   openclaw: "OpenClaw",
   grok: "Grok Build",
   zcode: "ZCode",
+  other: "其他",
 };
 
 export function agentLabel(agent: string): string {

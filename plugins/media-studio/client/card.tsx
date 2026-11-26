@@ -10,7 +10,7 @@ import { messages } from "./i18n";
 import { MediaViewer } from "./player";
 import { usePoster, useProbe } from "./queries";
 import { openInMediaPanel } from "./state";
-import { IconButton, kindIcon } from "./ui";
+import { IconButton, kindIcon, MONO_TEXT } from "./ui";
 
 function Tile({ theme, path, cwd, selected, onPress }: { theme: PluginTheme; path: string; cwd: string | null; selected: boolean; onPress(): void }) {
   const probe = useProbe(path, cwd);
@@ -25,11 +25,11 @@ function Tile({ theme, path, cwd, selected, onPress }: { theme: PluginTheme; pat
             style={{
               width: 148,
               height: 84,
-              borderRadius: 8,
+              borderRadius: 2,
               overflow: "hidden",
               backgroundColor: colors.surface2,
-              borderWidth: 2,
-              borderColor: selected ? colors.accent : (state as { hovered?: boolean }).hovered ? colors.border : "transparent",
+              borderWidth: selected ? 2 : 1,
+              borderColor: selected ? colors.accent : (state as { hovered?: boolean }).hovered ? colors.accent : colors.border,
               alignItems: "center",
               justifyContent: "center",
             }}
@@ -37,15 +37,15 @@ function Tile({ theme, path, cwd, selected, onPress }: { theme: PluginTheme; pat
             {poster.data ? (
               <Image source={{ uri: poster.data }} resizeMode="cover" style={{ width: "100%", height: "100%" }} />
             ) : (
-              <Icon name={probe.isError ? "FileX" : kindIcon(kind)} size={22} color={probe.isError ? colors.statusDanger : colors.foregroundMuted} />
+              <Icon name={probe.isError ? "FileX" : kindIcon(kind)} size={20} color={probe.isError ? colors.statusDanger : colors.foregroundMuted} />
             )}
             {probe.data?.duration ? (
-              <View style={{ position: "absolute", right: 5, bottom: 5, paddingHorizontal: 5, height: 16, justifyContent: "center", borderRadius: 4, backgroundColor: "rgba(0,0,0,0.7)" }}>
-                <Text style={{ color: "#fff", fontSize: 10, fontWeight: "600", fontVariant: ["tabular-nums"] }}>{formatDuration(probe.data.duration)}</Text>
+              <View style={{ position: "absolute", right: 4, bottom: 4, paddingHorizontal: 4, height: 15, justifyContent: "center", borderRadius: 1, backgroundColor: "rgba(0,0,0,0.82)" }}>
+                <Text style={[MONO_TEXT, { color: "#fff", fontSize: 10, fontWeight: "700" }]}>{formatDuration(probe.data.duration)}</Text>
               </View>
             ) : null}
           </View>
-          <Text numberOfLines={1} style={{ color: selected ? colors.foreground : colors.foregroundMuted, fontSize: 11, fontWeight: selected ? "600" : "400" }}>
+          <Text numberOfLines={1} style={[MONO_TEXT, { color: selected ? colors.accent : colors.foregroundMuted, fontSize: 11, fontWeight: selected ? "700" : "400" }]}>
             {baseName(path)}
           </Text>
         </>
@@ -54,10 +54,6 @@ function Tile({ theme, path, cwd, selected, onPress }: { theme: PluginTheme; pat
   );
 }
 
-/**
- * The chat card for media an agent showed with preview_media, or that a turn created. One file
- * opens straight into the inline player; several start as a strip of thumbnails.
- */
 export function MediaCard({ agentId, item, theme, layout }: PluginTimelineItemProps<z.output<typeof cardSchema>>) {
   const { t } = useTranslation(messages);
   const data = item.data;
@@ -83,59 +79,81 @@ export function MediaCard({ agentId, item, theme, layout }: PluginTimelineItemPr
         marginVertical: 6,
         borderWidth: 1,
         borderColor: colors.border,
-        borderRadius: 12,
+        borderRadius: 2,
         backgroundColor: colors.surface0,
-        padding: layout.compact ? 10 : 12,
-        gap: 10,
         maxWidth: 780,
+        overflow: "hidden",
       }}
     >
-      <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
-        <View style={{ width: 28, height: 28, borderRadius: 8, backgroundColor: colors.surface2, alignItems: "center", justifyContent: "center" }}>
-          <Icon name={changedOnly ? "FolderClock" : "Clapperboard"} size={15} color={colors.accent} />
-        </View>
+      <View
+        style={{
+          flexDirection: "row",
+          alignItems: "center",
+          gap: 8,
+          paddingHorizontal: layout.compact ? 10 : 12,
+          paddingVertical: 7,
+          borderBottomWidth: 1,
+          borderBottomColor: colors.border,
+          backgroundColor: colors.surface1,
+        }}
+      >
+        <Icon name={changedOnly ? "FolderClock" : "Clapperboard"} size={14} color={colors.accent} />
         <View style={{ flex: 1, gap: 1 }}>
-          <Text numberOfLines={1} style={{ color: colors.foreground, fontSize: 13, fontWeight: "600" }}>
+          <Text numberOfLines={1} style={[MONO_TEXT, { color: colors.foreground, fontSize: 12, fontWeight: "700" }]}>
             {title}
           </Text>
           {count > 1 || data.title?.trim() ? (
-            <Text numberOfLines={1} style={{ color: colors.foregroundMuted, fontSize: 11 }}>
+            <Text numberOfLines={1} style={[MONO_TEXT, { color: colors.foregroundMuted, fontSize: 10 }]}>
               {t("card.files", { count })}
             </Text>
           ) : null}
         </View>
         {workspaceId ? <IconButton theme={theme} icon="PanelRightOpen" size="sm" label={t("card.openPanel")} onPress={() => open(null)} /> : null}
       </View>
-      {data.note?.trim() ? <Text style={{ color: colors.foreground, fontSize: 13, lineHeight: 19 }}>{data.note.trim()}</Text> : null}
-      {data.state === "failed" ? (
-        <Text style={{ color: colors.statusDanger, fontSize: 12 }}>{data.error ?? t("card.failed")}</Text>
-      ) : null}
-      {data.paths.length > 1 ? (
-        <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
-          {data.paths.map((path, index) => (
-            <Tile key={path} theme={theme} path={path} cwd={cwd} selected={selected === index} onPress={() => setSelected(selected === index ? null : index)} />
-          ))}
-          {data.more > 0 ? (
-            <Pressable onPress={() => open(null)} style={{ width: 84, height: 84, borderRadius: 8, backgroundColor: colors.surface2, alignItems: "center", justifyContent: "center" }}>
-              <Text style={{ color: colors.foregroundMuted, fontSize: 12 }}>{t("card.more", { count: data.more })}</Text>
-            </Pressable>
-          ) : null}
-        </View>
-      ) : null}
-      {selected !== null && data.paths[selected] ? (
-        <MediaViewer
-          key={data.paths[selected]}
-          theme={theme}
-          compact={layout.compact}
-          path={data.paths[selected]!}
-          cwd={cwd}
-          workspaceId={workspaceId}
-          workspaceRoot={workspaceRoot ?? cwd}
-          agentId={agentId}
-          variant="inline"
-          onOpenInPanel={workspaceId ? (path) => open(path) : undefined}
-        />
-      ) : null}
+      <View style={{ padding: layout.compact ? 10 : 12, gap: 10 }}>
+        {data.note?.trim() ? <Text style={[MONO_TEXT, { color: colors.foreground, fontSize: 12, lineHeight: 18 }]}>{data.note.trim()}</Text> : null}
+        {data.state === "failed" ? (
+          <Text style={[MONO_TEXT, { color: colors.statusDanger, fontSize: 11 }]}>{data.error ?? t("card.failed")}</Text>
+        ) : null}
+        {data.paths.length > 1 ? (
+          <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
+            {data.paths.map((path, index) => (
+              <Tile key={path} theme={theme} path={path} cwd={cwd} selected={selected === index} onPress={() => setSelected(selected === index ? null : index)} />
+            ))}
+            {data.more > 0 ? (
+              <Pressable
+                onPress={() => open(null)}
+                style={{
+                  width: 84,
+                  height: 84,
+                  borderRadius: 2,
+                  borderWidth: 1,
+                  borderColor: colors.border,
+                  backgroundColor: colors.surface1,
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                <Text style={[MONO_TEXT, { color: colors.foregroundMuted, fontSize: 11 }]}>{t("card.more", { count: data.more })}</Text>
+              </Pressable>
+            ) : null}
+          </View>
+        ) : null}
+        {selected !== null && data.paths[selected] ? (
+          <MediaViewer
+            key={data.paths[selected]}
+            theme={theme}
+            compact={layout.compact}
+            path={data.paths[selected]!}
+            cwd={cwd}
+            workspaceId={workspaceId}
+            workspaceRoot={workspaceRoot ?? cwd}
+            agentId={agentId}
+            variant="inline"
+            onOpenInPanel={workspaceId ? (path) => open(path) : undefined}
+          />
+        ) : null}
+      </View>
     </View>
   );
 }

@@ -1,7 +1,7 @@
 {
   "id": "host-monitor",
-  "name": "Host monitor",
-  "description": "CPU, memory, disk and network usage of the daemon host in the sidebar footer",
+  "name": "主机监控",
+  "description": "在侧边栏底部以终端风格实时监控守护进程主机的 CPU、内存、磁盘与网络状态",
   "media": [
     "assets/screenshot.png"
   ],

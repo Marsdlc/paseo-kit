@@ -7,7 +7,7 @@ import { ActivityIndicator, Pressable, Text, View } from "react-native";
 import { formatTimecode, formatTimecodeShort, relativeTo } from "../shared/media";
 import { grabRpc, notesAddRpc, type MediaInfo } from "../shared/rpc";
 import { messages } from "./i18n";
-import { Chip, IconButton, NO_OUTLINE } from "./ui";
+import { Chip, IconButton, MONO_TEXT, NO_OUTLINE } from "./ui";
 import { isMac, isWeb } from "./web";
 
 const PARENT_LABEL = "paseo.parent-agent-id";
@@ -18,7 +18,6 @@ interface AgentOption {
   status: string;
 }
 
-/** The workspace's agents, top-level ones first, most recently active first. */
 function useWorkspaceAgents(workspaceId: string | null) {
   const paseo = usePaseo();
   return useQuery({
@@ -30,7 +29,6 @@ function useWorkspaceAgents(workspaceId: string | null) {
       return result.entries
         .map((entry) => entry.agent)
         .filter((agent) => agent.workspaceId === workspaceId && !agent.archivedAt)
-        // Top-level agents first, then subagents; each group most recently active first.
         .sort((a, b) => {
           const sub = Number(!!a.labels?.[PARENT_LABEL]) - Number(!!b.labels?.[PARENT_LABEL]);
           return sub || Date.parse(b.lastUserMessageAt ?? b.updatedAt) - Date.parse(a.lastUserMessageAt ?? a.updatedAt);
@@ -47,7 +45,6 @@ export interface ReviewTarget {
   outPoint: number | null;
 }
 
-/** The text an agent receives: file, timecodes in both forms, and the note. */
 export function composeNote(target: ReviewTarget, note: string, workspaceRoot: string | null, framePath: string | null): string {
   const { info, time, inPoint, outPoint } = target;
   const fps = info.fps;
@@ -65,10 +62,6 @@ export function composeNote(target: ReviewTarget, note: string, workspaceRoot: s
   return lines.join("\n");
 }
 
-/**
- * A note for an agent about the current moment: timecode, optional in and out range, and the frame
- * attached as an image (also saved as a PNG in the workspace so the agent can open it again).
- */
 export function ReviewBox({
   theme,
   target,
@@ -82,10 +75,8 @@ export function ReviewBox({
   target: ReviewTarget;
   workspaceId: string | null;
   workspaceRoot: string | null;
-  /** Fixed target, as in a chat card. Null: pick from the workspace's agents. */
   agentId: string | null;
   compact?: boolean;
-  /** Narrow column: the send row goes under the chips. */
   stacked?: boolean;
 }) {
   const { t } = useTranslation(messages);
@@ -115,8 +106,6 @@ export function ReviewBox({
   const status = agentId ? fixedStatus : (option?.status ?? null);
   const title = agentId ? (fixedTitle ?? t("review.thisAgent")) : (option?.title ?? "");
   const busy = status === "running" || status === "initializing";
-  // A working agent gets the note too: it joins the current turn ("steer") instead of stopping it,
-  // so an editor can keep reviewing while the agent renders.
   const canSend = !!targetId && note.trim().length > 0 && !sending && !!workspaceRoot;
 
   async function send() {
@@ -169,22 +158,21 @@ export function ReviewBox({
     target.info.kind === "image"
       ? null
       : ranged
-        ? `${short(from)} → ${short(to)} · ${short(Math.max(0, to - from))}`
+        ? `${short(from)} → ${short(to)} | ${short(Math.max(0, to - from))}`
         : short(target.time);
   const hint = !targetId ? t("review.noAgent") : busy ? t("review.busy") : null;
 
   return (
     <View
-
       style={{
         borderWidth: 1,
         borderColor: colors.border,
-        borderRadius: 12,
+        borderRadius: 2,
         backgroundColor: colors.surface1,
         paddingHorizontal: 10,
         paddingTop: 8,
         paddingBottom: 6,
-        gap: 4,
+        gap: 6,
       }}
     >
       <TextInput
@@ -202,10 +190,9 @@ export function ReviewBox({
             }
           },
         } as object)}
-
-        style={[{ minHeight: compact ? 22 : 40, maxHeight: 160, color: colors.foreground, fontSize: 13, paddingVertical: 2 }, NO_OUTLINE]}
+        style={[MONO_TEXT, { minHeight: compact ? 22 : 40, maxHeight: 160, color: colors.foreground, fontSize: 12, paddingVertical: 2 }, NO_OUTLINE]}
       />
-      <View style={{ flexDirection: "row", alignItems: "center", gap: 2, flexWrap: "wrap" }}>
+      <View style={{ flexDirection: "row", alignItems: "center", gap: 4, flexWrap: "wrap" }}>
         {where ? <Chip theme={theme} icon={ranged ? "SquareSplitHorizontal" : "Clock"} label={where} mono /> : null}
         {target.info.hasVideo ? (
           <Chip
@@ -227,19 +214,19 @@ export function ReviewBox({
           />
         ) : null}
         {stacked ? null : <View style={{ flex: 1 }} />}
-        {stacked ? (
-          <View style={{ flexBasis: "100%", height: 0 }} />
-        ) : null}
+        {stacked ? <View style={{ flexBasis: "100%", height: 0 }} /> : null}
         {stacked ? <View style={{ flex: 1 }} /> : null}
         {hint ? (
-          <Text numberOfLines={2} style={{ color: colors.foregroundMuted, fontSize: 11, flexShrink: 1, marginRight: 6 }}>
+          <Text numberOfLines={2} style={[MONO_TEXT, { color: colors.foregroundMuted, fontSize: 10, flexShrink: 1, marginRight: 6 }]}>
             {hint}
           </Text>
         ) : isWeb && !compact ? (
-          <Text style={{ color: colors.foregroundMuted, fontSize: 11, marginRight: 6 }}>{t("review.sendHint", { key: isMac ? "⌘" : "Ctrl" })}</Text>
+          <Text style={[MONO_TEXT, { color: colors.foregroundMuted, fontSize: 10, marginRight: 6 }]}>
+            {t("review.sendHint", { key: isMac ? "⌘" : "Ctrl" })}
+          </Text>
         ) : null}
         {sending ? (
-          <View style={{ width: 30, height: 30, alignItems: "center", justifyContent: "center" }}>
+          <View style={{ width: 28, height: 28, alignItems: "center", justifyContent: "center" }}>
             <ActivityIndicator size="small" color={colors.accent} />
           </View>
         ) : (
@@ -260,24 +247,26 @@ export function ReviewBox({
                 flexDirection: "row",
                 alignItems: "center",
                 gap: 10,
-                paddingVertical: 10,
-                paddingHorizontal: 12,
-                borderRadius: 8,
+                paddingVertical: 9,
+                paddingHorizontal: 10,
+                borderRadius: 2,
+                borderWidth: 1,
+                borderColor: entry.id === targetId ? colors.accent : "transparent",
                 backgroundColor: entry.id === targetId || pressed ? colors.surface2 : "transparent",
               })}
             >
               <View
                 style={{
-                  width: 8,
-                  height: 8,
-                  borderRadius: 4,
+                  width: 7,
+                  height: 7,
+                  borderRadius: 1,
                   backgroundColor: entry.status === "running" ? colors.statusWarning : entry.status === "error" ? colors.statusDanger : colors.statusSuccess,
                 }}
               />
-              <Text numberOfLines={1} style={{ color: colors.foreground, fontSize: 13, flex: 1 }}>
+              <Text numberOfLines={1} style={[MONO_TEXT, { color: colors.foreground, fontSize: 12, flex: 1 }]}>
                 {entry.title}
               </Text>
-              {entry.id === targetId ? <Icon name="Check" size={15} color={colors.accent} /> : null}
+              {entry.id === targetId ? <Icon name="Check" size={14} color={colors.accent} /> : null}
             </Pressable>
           ))}
         </Modal.Content>

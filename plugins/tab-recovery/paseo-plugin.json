@@ -1,7 +1,7 @@
 {
   "id": "tab-recovery",
-  "name": "Closed agents",
-  "description": "Reopen agent tabs that were closed, and so archived, by accident",
+  "name": "关闭标签恢复",
+  "description": "以终端风格列表查看当前工作区已关闭（归档）的 Agent，一键恢复会话与标签页",
   "requirements": {
     "paseo": ">=0.11.1"
   }

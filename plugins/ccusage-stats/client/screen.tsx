@@ -23,11 +23,13 @@ import {
   useClaudeLimits,
 } from "./limits";
 import { AgentList, Composition, FONT, Headline } from "./summary";
+import { MONO_TEXT } from "./terminal";
 
 type HoverState = PressableStateCallbackType & { hovered?: boolean };
 
-const MAX_CONTENT_WIDTH = 880;
+const MAX_CONTENT_WIDTH = 900;
 
+/** Crisp terminal-style bordered frame with a header strip. */
 export function Card({
   theme,
   title,
@@ -42,32 +44,49 @@ export function Card({
   return (
     <View
       style={{
-        gap: 12,
-        padding: 16,
-        borderRadius: 12,
+        borderRadius: 2,
         borderWidth: 1,
         borderColor: theme.colors.border,
-        backgroundColor: theme.colors.surface1,
+        backgroundColor: theme.colors.surface0,
+        overflow: "hidden",
       }}
     >
-      <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+      <View
+        style={{
+          flexDirection: "row",
+          alignItems: "center",
+          gap: 8,
+          paddingHorizontal: 12,
+          paddingVertical: 8,
+          borderBottomWidth: 1,
+          borderBottomColor: theme.colors.border,
+          backgroundColor: theme.colors.surface1,
+        }}
+      >
+        <Text style={[MONO_TEXT, { color: theme.colors.accent, fontSize: FONT.title, fontWeight: "700" }]}>
+          ▸
+        </Text>
         <Text
-          style={{
-            flex: 1,
-            fontSize: FONT.title,
-            fontWeight: "600",
-            color: theme.colors.foreground,
-          }}
+          style={[
+            MONO_TEXT,
+            {
+              flex: 1,
+              fontSize: FONT.title,
+              fontWeight: "700",
+              color: theme.colors.foreground,
+            },
+          ]}
         >
           {title}
         </Text>
         {trailing}
       </View>
-      {children}
+      <View style={{ gap: 12, padding: 14 }}>{children}</View>
     </View>
   );
 }
 
+/** Framed TUI telemetry cell. */
 export function Stat({
   theme,
   label,
@@ -80,20 +99,35 @@ export function Stat({
   detail?: string;
 }) {
   return (
-    <View style={{ flexGrow: 1, flexBasis: 120, gap: 2 }}>
-      <Text style={{ fontSize: FONT.caption, color: theme.colors.foregroundMuted }}>{label}</Text>
+    <View
+      style={{
+        flexGrow: 1,
+        flexBasis: 140,
+        gap: 3,
+        padding: 10,
+        borderRadius: 2,
+        borderWidth: 1,
+        borderColor: theme.colors.border,
+        backgroundColor: theme.colors.surface1,
+      }}
+    >
+      <Text style={[MONO_TEXT, { fontSize: FONT.caption, color: theme.colors.foregroundMuted }]}>
+        {label}
+      </Text>
       <Text
-        style={{
-          fontSize: 18,
-          fontWeight: "600",
-          color: theme.colors.foreground,
-          fontVariant: ["tabular-nums"],
-        }}
+        style={[
+          MONO_TEXT,
+          {
+            fontSize: 18,
+            fontWeight: "700",
+            color: theme.colors.foreground,
+          },
+        ]}
       >
         {value}
       </Text>
       {detail ? (
-        <Text style={{ fontSize: FONT.caption, color: theme.colors.foregroundMuted }}>
+        <Text style={[MONO_TEXT, { fontSize: FONT.caption, color: theme.colors.foregroundMuted }]}>
           {detail}
         </Text>
       ) : null}
@@ -101,36 +135,35 @@ export function Stat({
   );
 }
 
-/** Cache reads are billed far below fresh input, so their share explains most of the cost. */
 function Stats({ theme, period }: { theme: PluginTheme; period: UsagePeriod }) {
   const { usage } = period;
   const prompt = usage.inputTokens + usage.cacheCreationTokens + usage.cacheReadTokens;
   const perMillion = usage.totalTokens > 0 ? usage.cost / (usage.totalTokens / 1_000_000) : 0;
   return (
-    <View style={{ flexDirection: "row", flexWrap: "wrap", rowGap: 12, columnGap: 16 }}>
+    <View style={{ flexDirection: "row", flexWrap: "wrap", rowGap: 10, columnGap: 10 }}>
       <Stat
         theme={theme}
-        label="Cost"
+        label="估算费用"
         value={formatCost(usage.cost)}
-        detail={`${formatCost(perMillion)} per 1M tokens`}
+        detail={`每百万 Token ${formatCost(perMillion)}`}
       />
       <Stat
         theme={theme}
-        label="Cache hit rate"
+        label="缓存命中率"
         value={prompt > 0 ? formatPercent(usage.cacheReadTokens / prompt) : "—"}
-        detail="of prompt tokens read from cache"
+        detail="提示词命中缓存占比"
       />
       <Stat
         theme={theme}
-        label="Output"
+        label="输出总量"
         value={formatTokens(usage.outputTokens)}
-        detail="tokens generated"
+        detail="生成 Token 数"
       />
       <Stat
         theme={theme}
-        label="Agents"
+        label="活跃 Agent"
         value={`${period.agents.length}`}
-        detail={`${new Set(period.agents.flatMap((a) => a.models.map((m) => m.model))).size} models`}
+        detail={`涉及 ${new Set(period.agents.flatMap((a) => a.models.map((m) => m.model))).size} 个模型`}
       />
     </View>
   );
@@ -140,49 +173,57 @@ function SessionRow({
   theme,
   order,
   session,
+  last,
 }: {
   theme: PluginTheme;
   order: readonly string[];
   session: SessionUsage;
+  last: boolean;
 }) {
   const topModel = session.models[0]?.model;
   return (
-    <View style={{ flexDirection: "row", alignItems: "center", gap: 8, minHeight: 32 }}>
+    <View
+      style={{
+        flexDirection: "row",
+        alignItems: "center",
+        gap: 8,
+        minHeight: 36,
+        paddingVertical: 5,
+        borderBottomWidth: last ? 0 : 1,
+        borderBottomColor: theme.colors.border,
+      }}
+    >
       <SwatchDot swatch={agentSwatch(theme, order, session.agent)} />
-      <View style={{ flex: 1, minWidth: 0 }}>
-        <Text numberOfLines={1} style={{ fontSize: FONT.body, color: theme.colors.foreground }}>
+      <View style={{ flex: 1, minWidth: 0, gap: 1 }}>
+        <Text numberOfLines={1} style={[MONO_TEXT, { fontSize: FONT.body, color: theme.colors.foreground }]}>
           {agentLabel(session.agent)}
-          <Text style={{ color: theme.colors.foregroundMuted, fontVariant: ["tabular-nums"] }}>
-            {"  "}
+          <Text style={{ color: theme.colors.foregroundMuted }}>
+            {"  #"}
             {shortSessionId(session.id)}
           </Text>
         </Text>
         <Text
           numberOfLines={1}
-          style={{ fontSize: FONT.caption, color: theme.colors.foregroundMuted }}
+          style={[MONO_TEXT, { fontSize: FONT.caption, color: theme.colors.foregroundMuted }]}
         >
           {[topModel, session.lastActivity ? formatAgo(Date.parse(session.lastActivity)) : null]
             .filter(Boolean)
-            .join(" · ")}
+            .join(" | ")}
         </Text>
       </View>
-      <Text
-        style={{
-          fontSize: FONT.body,
-          color: theme.colors.foreground,
-          fontVariant: ["tabular-nums"],
-        }}
-      >
+      <Text style={[MONO_TEXT, { fontSize: FONT.body, color: theme.colors.foreground }]}>
         {formatTokens(session.usage.totalTokens)}
       </Text>
       <Text
-        style={{
-          width: 52,
-          textAlign: "right",
-          fontSize: FONT.body,
-          color: theme.colors.foregroundMuted,
-          fontVariant: ["tabular-nums"],
-        }}
+        style={[
+          MONO_TEXT,
+          {
+            width: 56,
+            textAlign: "right",
+            fontSize: FONT.body,
+            color: theme.colors.foregroundMuted,
+          },
+        ]}
       >
         {formatCost(session.usage.cost)}
       </Text>
@@ -202,7 +243,6 @@ function Body({
   const [kind, setKind] = useState<PeriodKind>("daily");
   const [picked, setPicked] = useState<number | null>(null);
   const all = report[kind];
-  // A phone shows half the columns so each stays wide enough to press.
   const periods = compact ? all.slice(-Math.ceil(all.length / 2)) : all;
   const selected = picked !== null && picked < periods.length ? picked : periods.length - 1;
   const period = periods[selected];
@@ -217,44 +257,76 @@ function Body({
     : "";
 
   return (
-    <View style={{ gap: compact ? 12 : 16 }}>
-      <View style={{ flexDirection: "row", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
+    <View style={{ gap: compact ? 12 : 14 }}>
+      <View
+        style={{
+          flexDirection: "row",
+          alignItems: "center",
+          gap: 10,
+          flexWrap: "wrap",
+          paddingBottom: 10,
+          borderBottomWidth: 1,
+          borderBottomColor: theme.colors.border,
+        }}
+      >
+        <Text
+          style={[
+            MONO_TEXT,
+            { fontSize: FONT.title, fontWeight: "700", color: theme.colors.foreground },
+          ]}
+        >
+          <Text style={{ color: theme.colors.accent }}>$ </Text>ccusage --stats
+        </Text>
         <Segmented
           theme={theme}
           options={PERIOD_OPTIONS}
           value={kind}
           onChange={changeKind}
-          accessibilityLabel="Period"
+          accessibilityLabel="统计周期"
         />
         <Text
-          style={{
-            flex: 1,
-            fontSize: FONT.caption,
-            color: theme.colors.foregroundMuted,
-            textAlign: "right",
-          }}
+          style={[
+            MONO_TEXT,
+            {
+              flex: 1,
+              fontSize: FONT.caption,
+              color: theme.colors.foregroundMuted,
+              textAlign: "right",
+            },
+          ]}
         >
-          Updated {formatAgo(report.generatedAt)} · {report.timezone}
+          更新于 {formatAgo(report.generatedAt)} | {report.timezone}
         </Text>
       </View>
       {report.refreshError ? (
-        <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
+        <View
+          style={{
+            flexDirection: "row",
+            alignItems: "center",
+            gap: 6,
+            padding: 8,
+            borderRadius: 2,
+            borderWidth: 1,
+            borderColor: theme.colors.statusWarning,
+            backgroundColor: theme.colors.surface1,
+          }}
+        >
           <Icon name="TriangleAlert" size={14} color={theme.colors.statusWarning} />
-          <Text style={{ flex: 1, fontSize: FONT.body, color: theme.colors.statusWarning }}>
-            Showing older numbers: {report.refreshError}
+          <Text style={[MONO_TEXT, { flex: 1, fontSize: FONT.body, color: theme.colors.statusWarning }]}>
+            当前展示旧数据：{report.refreshError}
           </Text>
         </View>
       ) : null}
 
       <LimitsCard theme={theme} />
 
-      <Card theme={theme} title="Tokens">
+      <Card theme={theme} title="Token 趋势">
         <Headline
           theme={theme}
           kind={kind}
           periods={periods}
           index={selected}
-          heroSize={compact ? 26 : 30}
+          heroSize={compact ? 24 : 28}
         />
         <PeriodBars
           theme={theme}
@@ -271,16 +343,16 @@ function Body({
 
       {period ? (
         <>
-          <Card theme={theme} title={periodTitle}>
+          <Card theme={theme} title={`周期明细 · ${periodTitle}`}>
             <Stats theme={theme} period={period} />
             <Composition theme={theme} usage={period.usage} />
           </Card>
           <Card
             theme={theme}
-            title="By agent"
+            title="按 Agent 分布"
             trailing={
-              <Text style={{ fontSize: FONT.caption, color: theme.colors.foregroundMuted }}>
-                Press an agent for its models
+              <Text style={[MONO_TEXT, { fontSize: FONT.caption, color: theme.colors.foregroundMuted }]}>
+                点击行展开模型明细
               </Text>
             }
           >
@@ -289,28 +361,28 @@ function Body({
         </>
       ) : null}
 
-      <Card theme={theme} title="Recent sessions">
+      <Card theme={theme} title="最近会话">
         {report.recentSessions.length === 0 ? (
-          <Text style={{ fontSize: FONT.body, color: theme.colors.foregroundMuted }}>
-            No sessions yet.
+          <Text style={[MONO_TEXT, { fontSize: FONT.body, color: theme.colors.foregroundMuted }]}>
+            暂无会话记录。
           </Text>
         ) : (
           <View>
-            {report.recentSessions.map((session) => (
+            {report.recentSessions.map((session, index) => (
               <SessionRow
                 key={`${session.agent}:${session.id}`}
                 theme={theme}
                 order={report.agents}
                 session={session}
+                last={index === report.recentSessions.length - 1}
               />
             ))}
           </View>
         )}
       </Card>
 
-      <Text style={{ fontSize: FONT.caption, color: theme.colors.foregroundMuted }}>
-        Read by ccusage from local agent logs on this host. Costs are estimates from ccusage's
-        built-in pricing table, not your bill.
+      <Text style={[MONO_TEXT, { fontSize: FONT.caption, color: theme.colors.foregroundMuted }]}>
+        # 数据由 ccusage 从本机 Agent 日志离线读取，费用按内置 API 标价估算，并非实际账单。
       </Text>
       <ClaudeLimitsOffNote theme={theme} />
     </View>
@@ -322,7 +394,7 @@ function LimitsCard({ theme }: { theme: PluginTheme }) {
   const { data } = useClaudeLimits();
   if (!data?.enabled) return null;
   return (
-    <Card theme={theme} title="Claude plan limits" trailing={<LimitsRefreshButton theme={theme} />}>
+    <Card theme={theme} title="Claude 订阅额度" trailing={<LimitsRefreshButton theme={theme} />}>
       <ClaudeLimitsSection theme={theme} />
     </Card>
   );
@@ -330,7 +402,7 @@ function LimitsCard({ theme }: { theme: PluginTheme }) {
 
 export function UsageScreen({ theme, layout }: PluginScreenProps) {
   const { data, error, isPending, refetch, isRefetching } = useUsageReport();
-  const padding = layout.compact ? 16 : 24;
+  const padding = layout.compact ? 14 : 20;
   return (
     <ScrollView
       style={{ flex: 1, backgroundColor: theme.colors.surface0 }}
@@ -347,17 +419,23 @@ export function UsageScreen({ theme, layout }: PluginScreenProps) {
               color={isPending ? theme.colors.foregroundMuted : theme.colors.statusDanger}
             />
             <Text
-              style={{ fontSize: FONT.title, color: theme.colors.foreground, textAlign: "center" }}
+              style={[
+                MONO_TEXT,
+                { fontSize: FONT.title, color: theme.colors.foreground, textAlign: "center" },
+              ]}
             >
-              {isPending ? "Reading usage logs..." : "Could not read usage"}
+              {isPending ? "$ 正在读取用量日志..." : "无法读取 Token 用量"}
             </Text>
             {error ? (
               <Text
-                style={{
-                  fontSize: FONT.body,
-                  color: theme.colors.foregroundMuted,
-                  textAlign: "center",
-                }}
+                style={[
+                  MONO_TEXT,
+                  {
+                    fontSize: FONT.body,
+                    color: theme.colors.foregroundMuted,
+                    textAlign: "center",
+                  },
+                ]}
               >
                 {error.message}
               </Text>
@@ -365,18 +443,20 @@ export function UsageScreen({ theme, layout }: PluginScreenProps) {
             {!isPending ? (
               <Pressable
                 accessibilityRole="button"
-                accessibilityLabel="Try again"
+                accessibilityLabel="重试"
                 disabled={isRefetching}
                 onPress={() => void refetch()}
                 style={({ hovered }: HoverState) => ({
                   paddingVertical: 6,
-                  paddingHorizontal: 12,
-                  borderRadius: 8,
-                  backgroundColor: hovered ? theme.colors.surface1 : theme.colors.surface2,
+                  paddingHorizontal: 14,
+                  borderRadius: 2,
+                  borderWidth: 1,
+                  borderColor: hovered ? theme.colors.accent : theme.colors.border,
+                  backgroundColor: hovered ? theme.colors.surface2 : theme.colors.surface1,
                 })}
               >
-                <Text style={{ fontSize: FONT.body, color: theme.colors.foreground }}>
-                  {isRefetching ? "Trying..." : "Try again"}
+                <Text style={[MONO_TEXT, { fontSize: FONT.body, color: theme.colors.foreground }]}>
+                  {isRefetching ? "[ 重试中... ]" : "[ 重试 ]"}
                 </Text>
               </Pressable>
             ) : null}

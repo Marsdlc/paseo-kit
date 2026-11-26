@@ -6,21 +6,21 @@ import { SettingsScreen } from "./client/settings-screen";
 import { UsageSidebarItem } from "./client/sidebar";
 
 export default function contribute(client: PluginClientContext) {
-  client.addScreen({ id: "usage", title: "Token usage", Component: UsageScreen });
+  client.addScreen({ id: "usage", title: "Token 用量", Component: UsageScreen });
   client.addSidebarFooterItem({
     id: "usage-today",
-    title: "Token usage",
+    title: "Token 用量",
     Component: UsageSidebarItem,
   });
   client.addSettingsScreen({
     id: "settings",
-    title: "Token usage",
+    title: "Token 用量",
     icon: "Coins",
     Component: SettingsScreen,
   });
   client.addWorkspacePanel({
     id: SESSION_PANEL_ID,
-    title: "Session usage",
+    title: "会话用量",
     icon: "Coins",
     context: "agent",
     locations: ["workspace", "explorer"],
@@ -28,9 +28,9 @@ export default function contribute(client: PluginClientContext) {
   });
   client.addCommandCenterItem({
     id: "open-session-usage",
-    title: "Open session usage",
+    title: "打开当前会话用量",
     icon: "Coins",
-    keywords: ["ccusage", "tokens", "cost", "session", "subagents"],
+    keywords: ["ccusage", "tokens", "cost", "session", "subagents", "用量", "会话", "费用"],
     context: "agent",
     onSelect({ openPanel }) {
       openPanel(SESSION_PANEL_ID);
@@ -38,9 +38,9 @@ export default function contribute(client: PluginClientContext) {
   });
   client.addCommandCenterItem({
     id: "open-usage",
-    title: "Open token usage",
+    title: "打开 Token 用量面板",
     icon: "Coins",
-    keywords: ["ccusage", "tokens", "cost", "spend"],
+    keywords: ["ccusage", "tokens", "cost", "spend", "用量", "统计", "费用"],
     context: "global",
     onSelect({ openScreen }) {
       openScreen({ screenId: "usage" });

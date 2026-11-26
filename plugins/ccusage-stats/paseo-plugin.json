@@ -1,7 +1,7 @@
 {
   "id": "ccusage-stats",
-  "name": "Token usage",
-  "description": "Token usage and estimated cost of your coding agents, powered by ccusage",
+  "name": "Token 用量统计",
+  "description": "基于 ccusage 的终端风格编码 Agent Token 消耗与费用分析面板",
   "media": [
     "assets/screenshot.png",
     "assets/details.png"

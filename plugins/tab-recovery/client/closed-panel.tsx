@@ -5,9 +5,9 @@ import { useQuery } from "@tanstack/react-query";
 import { useEffect, useRef, useState } from "react";
 import { ActivityIndicator, Pressable, Text, View } from "react-native";
 import { closedAgentsRpc, restoreAgentRpc, type ClosedAgent } from "../shared/agents";
+import { MONO_TEXT } from "./terminal";
 
 const REFRESH_MS = 5_000;
-// How long to wait for a restored agent to show up as running before giving up on opening its tab.
 const OPEN_TIMEOUT_MS = 15_000;
 
 type Navigation = NonNullable<PluginWorkspacePanelProps["navigation"]>;
@@ -44,23 +44,33 @@ export function ClosedAgentsPanel({ theme, layout, workspaceId, navigation }: Pl
 
   return (
     <View style={{ flex: 1, backgroundColor: theme.colors.surface0 }}>
-      <View style={{ gap: 4, paddingHorizontal: padding, paddingTop: padding, paddingBottom: 8 }}>
-        <Text style={{ color: theme.colors.foreground, fontSize: 14, fontWeight: "600" }}>Closed agents</Text>
-        <Text style={{ color: muted, fontSize: 12 }}>
-          Closing an agent's tab archives it. Reopen restores the agent and its tab with the full history.
+      <View
+        style={{
+          gap: 3,
+          padding,
+          borderBottomWidth: 1,
+          borderBottomColor: theme.colors.border,
+          backgroundColor: theme.colors.surface1,
+        }}
+      >
+        <Text style={[MONO_TEXT, { color: theme.colors.foreground, fontSize: 13, fontWeight: "700" }]}>
+          <Text style={{ color: theme.colors.accent }}>$ </Text>已关闭的 Agent [{agents.length}]
+        </Text>
+        <Text style={[MONO_TEXT, { color: muted, fontSize: 11 }]}>
+          关闭 Agent 标签页会将其归档。点击「恢复」可重新打开标签页并保留完整对话历史。
         </Text>
       </View>
       {closed.isError ? (
         <Empty theme={theme} icon="TriangleAlert" text={String(closed.error)} />
       ) : !closed.data ? (
-        <Empty theme={theme} loading text="Loading" />
+        <Empty theme={theme} loading text="$ 正在加载已归档列表..." />
       ) : agents.length === 0 ? (
-        <Empty theme={theme} icon="ArchiveRestore" text="No closed agents in this workspace." />
+        <Empty theme={theme} icon="ArchiveRestore" text="# 当前工作区没有已关闭的 Agent。" />
       ) : (
         <FlatList
           data={agents}
           keyExtractor={(agent) => agent.id}
-          contentContainerStyle={{ paddingBottom: 24 }}
+          contentContainerStyle={{ padding, gap: 6, paddingBottom: 24 }}
           renderItem={({ item }) => (
             <AgentRow
               theme={theme}
@@ -80,7 +90,7 @@ export function ClosedAgentsPanel({ theme, layout, workspaceId, navigation }: Pl
           navigation={navigation}
           onDone={(opened) => {
             setOpening(null);
-            if (!opened) toast.show("Agent restored. Open it from the sidebar.", { variant: "success" });
+            if (!opened) toast.show("Agent 已恢复，请从侧边栏打开。", { variant: "success" });
           }}
         />
       ) : null}
@@ -88,10 +98,6 @@ export function ClosedAgentsPanel({ theme, layout, workspaceId, navigation }: Pl
   );
 }
 
-/**
- * Opens the restored agent's tab once the app sees it running. Opening it while the app still
- * holds the agent as archived would let the workspace close the tab again right away.
- */
 function OpenWhenRunning({
   agentId,
   navigation,
@@ -102,7 +108,6 @@ function OpenWhenRunning({
   onDone(opened: boolean): void;
 }) {
   const status = useAgent(agentId, (agent) => ({ status: agent.status }))?.status ?? null;
-  // The parent passes a fresh callback on every render; the timeout must not restart with it.
   const done = useRef(onDone);
   done.current = onDone;
 
@@ -138,50 +143,57 @@ function AgentRow({
   onReopen(): void;
 }) {
   const muted = theme.colors.foregroundMuted;
-  const model = agent.model ? `${agent.provider} · ${agent.model}` : agent.provider;
+  const model = agent.model ? `${agent.provider} | ${agent.model}` : agent.provider;
   return (
     <Pressable
       accessibilityRole="button"
-      accessibilityLabel={`Reopen ${agent.title ?? "untitled agent"}`}
+      accessibilityLabel={`恢复 ${agent.title ?? "未命名 Agent"}`}
       disabled={busy || disabled}
       onPress={onReopen}
       style={(state) => ({
         flexDirection: "row",
         alignItems: "center",
         gap: 10,
-        paddingHorizontal: compact ? 12 : 16,
+        paddingHorizontal: compact ? 10 : 12,
         paddingVertical: 10,
+        borderRadius: 2,
+        borderWidth: 1,
+        borderColor:
+          (state as { hovered?: boolean }).hovered || state.pressed ? theme.colors.accent : theme.colors.border,
         opacity: disabled ? 0.5 : 1,
         backgroundColor:
-          (state as { hovered?: boolean }).hovered || state.pressed ? theme.colors.surface1 : "transparent",
+          (state as { hovered?: boolean }).hovered || state.pressed ? theme.colors.surface2 : theme.colors.surface1,
       })}
     >
-      <Icon name="Bot" size={16} color={muted} />
+      <Text style={[MONO_TEXT, { color: theme.colors.accent, fontSize: 12, fontWeight: "700" }]}>▸</Text>
       <View style={{ flex: 1, minWidth: 0, gap: 2 }}>
-        <Text numberOfLines={1} style={{ color: theme.colors.foreground, fontSize: 13 }}>
-          {agent.title ?? "Untitled agent"}
+        <Text numberOfLines={1} style={[MONO_TEXT, { color: theme.colors.foreground, fontSize: 12, fontWeight: "700" }]}>
+          {agent.title ?? "未命名 Agent"}
         </Text>
-        <Text numberOfLines={1} style={{ color: muted, fontSize: 11 }}>
-          Closed {formatAgo(Date.parse(agent.archivedAt))} · {model}
+        <Text numberOfLines={1} style={[MONO_TEXT, { color: muted, fontSize: 11 }]}>
+          关闭于 {formatAgo(Date.parse(agent.archivedAt))} | {model}
         </Text>
       </View>
       {busy ? (
-        <ActivityIndicator size="small" color={muted} />
+        <ActivityIndicator size="small" color={theme.colors.accent} />
       ) : (
         <View
           style={{
             flexDirection: "row",
             alignItems: "center",
-            gap: 6,
-            paddingHorizontal: 10,
-            paddingVertical: 5,
-            borderRadius: 6,
+            gap: 5,
+            paddingHorizontal: 9,
+            paddingVertical: 4,
+            borderRadius: 2,
             borderWidth: 1,
             borderColor: theme.colors.border,
+            backgroundColor: theme.colors.surface0,
           }}
         >
-          <Icon name="RotateCcw" size={14} color={theme.colors.foreground} />
-          {compact ? null : <Text style={{ color: theme.colors.foreground, fontSize: 12 }}>Reopen</Text>}
+          <Icon name="RotateCcw" size={13} color={theme.colors.accent} />
+          {compact ? null : (
+            <Text style={[MONO_TEXT, { color: theme.colors.foreground, fontSize: 11 }]}>恢复</Text>
+          )}
         </View>
       )}
     </Pressable>
@@ -192,8 +204,8 @@ function Empty({ theme, text, icon, loading }: { theme: PluginTheme; text: strin
   return (
     <View style={{ flex: 1, alignItems: "center", justifyContent: "center", gap: 10, padding: 32 }}>
       {loading ? <ActivityIndicator color={theme.colors.foregroundMuted} /> : null}
-      {icon ? <Icon name={icon} size={24} color={theme.colors.foregroundMuted} /> : null}
-      <Text selectable style={{ color: theme.colors.foregroundMuted, textAlign: "center", maxWidth: 360 }}>
+      {icon ? <Icon name={icon} size={22} color={theme.colors.foregroundMuted} /> : null}
+      <Text selectable style={[MONO_TEXT, { color: theme.colors.foregroundMuted, fontSize: 12, textAlign: "center", maxWidth: 380 }]}>
         {text}
       </Text>
     </View>
@@ -202,12 +214,12 @@ function Empty({ theme, text, icon, loading }: { theme: PluginTheme; text: strin
 
 function formatAgo(timeMs: number, now = Date.now()): string {
   const seconds = Math.max(0, Math.round((now - timeMs) / 1000));
-  if (seconds < 60) return "just now";
+  if (seconds < 60) return "刚刚";
   const minutes = Math.round(seconds / 60);
-  if (minutes < 60) return `${minutes}m ago`;
+  if (minutes < 60) return `${minutes}分钟前`;
   const hours = Math.round(minutes / 60);
-  if (hours < 24) return `${hours}h ago`;
+  if (hours < 24) return `${hours}小时前`;
   const days = Math.round(hours / 24);
-  if (days < 30) return `${days}d ago`;
-  return new Date(timeMs).toLocaleDateString();
+  if (days < 30) return `${days}天前`;
+  return new Date(timeMs).toLocaleDateString("zh-CN");
 }

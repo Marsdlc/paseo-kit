@@ -14,6 +14,7 @@ import {
   formatTokens,
   PREVIOUS_LABEL,
 } from "./format";
+import { MONO_TEXT } from "./terminal";
 
 type HoverState = PressableStateCallbackType & { hovered?: boolean };
 
@@ -39,28 +40,37 @@ export function Headline({
   const isCurrent = index === periods.length - 1;
   const label = isCurrent ? CURRENT_LABEL[kind] : formatPeriodLong(kind, period.period);
   return (
-    <View style={{ gap: 2 }}>
-      <Text style={{ fontSize: FONT.caption, color: theme.colors.foregroundMuted }}>{label}</Text>
+    <View style={{ gap: 3 }}>
+      <Text style={[MONO_TEXT, { fontSize: FONT.caption, color: theme.colors.foregroundMuted }]}>
+        [{label}]
+      </Text>
       <View
         style={{ flexDirection: "row", alignItems: "baseline", flexWrap: "wrap", columnGap: 8 }}
       >
         <Text
-          style={{
-            fontSize: heroSize,
-            fontWeight: "600",
-            color: theme.colors.foreground,
-            fontVariant: ["tabular-nums"],
-          }}
+          style={[
+            MONO_TEXT,
+            {
+              fontSize: heroSize,
+              fontWeight: "700",
+              color: theme.colors.foreground,
+            },
+          ]}
         >
           {formatTokens(period.usage.totalTokens)}
         </Text>
-        <Text style={{ fontSize: FONT.body, color: theme.colors.foregroundMuted }}>tokens</Text>
+        <Text style={[MONO_TEXT, { fontSize: FONT.body, color: theme.colors.foregroundMuted }]}>
+          tokens
+        </Text>
         <Text
-          style={{
-            fontSize: FONT.title,
-            color: theme.colors.foreground,
-            fontVariant: ["tabular-nums"],
-          }}
+          style={[
+            MONO_TEXT,
+            {
+              fontSize: FONT.title,
+              fontWeight: "700",
+              color: theme.colors.accent,
+            },
+          ]}
         >
           {formatCost(period.usage.cost)}
         </Text>
@@ -70,7 +80,7 @@ export function Headline({
           theme={theme}
           current={period.usage.totalTokens}
           previous={previous.usage.totalTokens}
-          against={isCurrent ? PREVIOUS_LABEL[kind] : "the period before"}
+          against={isCurrent ? PREVIOUS_LABEL[kind] : "上一周期"}
         />
       ) : null}
     </View>
@@ -90,20 +100,22 @@ function Change({
   against: string;
 }) {
   let icon = "Minus";
-  let text = `Same as ${against}`;
+  let text = `与${against}持平`;
   if (previous === 0) {
     if (current === 0) return null;
     icon = "TrendingUp";
-    text = `Nothing ${against}`;
+    text = `${against}无用量`;
   } else if (current !== previous) {
     const ratio = current / previous - 1;
     icon = ratio > 0 ? "TrendingUp" : "TrendingDown";
-    text = `${ratio > 0 ? "+" : "−"}${formatPercent(Math.abs(ratio))} vs ${against} (${formatTokens(previous)})`;
+    text = `较${against} ${ratio > 0 ? "+" : "−"}${formatPercent(Math.abs(ratio))} (${formatTokens(previous)})`;
   }
   return (
     <View style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
       <Icon name={icon} size={12} color={theme.colors.foregroundMuted} />
-      <Text style={{ fontSize: FONT.caption, color: theme.colors.foregroundMuted }}>{text}</Text>
+      <Text style={[MONO_TEXT, { fontSize: FONT.caption, color: theme.colors.foregroundMuted }]}>
+        {text}
+      </Text>
     </View>
   );
 }
@@ -113,25 +125,25 @@ export function Composition({ theme, usage }: { theme: PluginTheme; usage: Usage
   const parts: { key: string; label: string; value: number; swatch: ShareSegment["swatch"] }[] = [
     {
       key: "input",
-      label: "Input",
+      label: "输入",
       value: usage.inputTokens,
       swatch: { color: theme.colors.accent, opacity: 1 },
     },
     {
       key: "output",
-      label: "Output",
+      label: "输出",
       value: usage.outputTokens,
       swatch: { color: theme.colors.accent, opacity: 0.5 },
     },
     {
       key: "cache-write",
-      label: "Cache write",
+      label: "缓存写入",
       value: usage.cacheCreationTokens,
       swatch: { color: theme.colors.foregroundMuted, opacity: 0.9 },
     },
     {
       key: "cache-read",
-      label: "Cache read",
+      label: "缓存读取",
       value: usage.cacheReadTokens,
       swatch: { color: theme.colors.foregroundMuted, opacity: 0.45 },
     },
@@ -144,19 +156,13 @@ export function Composition({ theme, usage }: { theme: PluginTheme; usage: Usage
         {parts.map((part) => (
           <View key={part.key} style={{ flexDirection: "row", alignItems: "center", gap: 5 }}>
             <SwatchDot swatch={part.swatch} />
-            <Text style={{ fontSize: FONT.caption, color: theme.colors.foregroundMuted }}>
+            <Text style={[MONO_TEXT, { fontSize: FONT.caption, color: theme.colors.foregroundMuted }]}>
               {part.label}
             </Text>
-            <Text
-              style={{
-                fontSize: FONT.caption,
-                color: theme.colors.foreground,
-                fontVariant: ["tabular-nums"],
-              }}
-            >
+            <Text style={[MONO_TEXT, { fontSize: FONT.caption, color: theme.colors.foreground }]}>
               {formatTokens(part.value)}
             </Text>
-            <Text style={{ fontSize: FONT.caption, color: theme.colors.foregroundMuted }}>
+            <Text style={[MONO_TEXT, { fontSize: FONT.caption, color: theme.colors.foregroundMuted }]}>
               {formatPercent(part.value / total)}
             </Text>
           </View>
@@ -168,37 +174,45 @@ export function Composition({ theme, usage }: { theme: PluginTheme; usage: Usage
 
 function ModelRows({ theme, agent }: { theme: PluginTheme; agent: AgentUsage }) {
   return (
-    <View style={{ gap: 4, paddingLeft: 14 }}>
+    <View
+      style={{
+        gap: 4,
+        paddingLeft: 14,
+        paddingVertical: 4,
+        borderLeftWidth: 1,
+        borderLeftColor: theme.colors.border,
+        marginLeft: 3,
+      }}
+    >
       {agent.models.map((model) => (
         <View key={model.model} style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
           <Text
             numberOfLines={1}
-            style={{
-              flex: 1,
-              minWidth: 0,
-              fontSize: FONT.caption,
-              color: theme.colors.foregroundMuted,
-            }}
+            style={[
+              MONO_TEXT,
+              {
+                flex: 1,
+                minWidth: 0,
+                fontSize: FONT.caption,
+                color: theme.colors.foregroundMuted,
+              },
+            ]}
           >
-            {model.model}
+            ├─ {model.model}
           </Text>
-          <Text
-            style={{
-              fontSize: FONT.caption,
-              color: theme.colors.foreground,
-              fontVariant: ["tabular-nums"],
-            }}
-          >
+          <Text style={[MONO_TEXT, { fontSize: FONT.caption, color: theme.colors.foreground }]}>
             {formatTokens(model.usage.totalTokens)}
           </Text>
           <Text
-            style={{
-              width: 48,
-              textAlign: "right",
-              fontSize: FONT.caption,
-              color: theme.colors.foregroundMuted,
-              fontVariant: ["tabular-nums"],
-            }}
+            style={[
+              MONO_TEXT,
+              {
+                width: 52,
+                textAlign: "right",
+                fontSize: FONT.caption,
+                color: theme.colors.foregroundMuted,
+              },
+            ]}
           >
             {formatCost(model.usage.cost)}
           </Text>
@@ -208,10 +222,7 @@ function ModelRows({ theme, agent }: { theme: PluginTheme; agent: AgentUsage }) 
   );
 }
 
-/**
- * One row per agent: swatch, name, share of the period, tokens, cost. With `expandable`, a press
- * reveals the agent's models.
- */
+/** One row per agent: swatch, name, share of the period, tokens, cost. */
 export function AgentList({
   theme,
   order,
@@ -227,54 +238,59 @@ export function AgentList({
   const agents = period ? foldAgents(period.agents, order) : [];
   if (!period || agents.length === 0) {
     return (
-      <Text style={{ fontSize: FONT.body, color: theme.colors.foregroundMuted }}>
-        No usage recorded in this period.
+      <Text style={[MONO_TEXT, { fontSize: FONT.body, color: theme.colors.foregroundMuted }]}>
+        该周期暂无用量记录。
       </Text>
     );
   }
   const total = Math.max(period.usage.totalTokens, 1);
   return (
     <View style={{ gap: 2 }}>
-      {agents.map((agent) => {
+      {agents.map((agent, index) => {
         const open = expandable && expanded === agent.agent;
         const share = agent.usage.totalTokens / total;
         const row = (
-          <View style={{ flexDirection: "row", alignItems: "center", gap: 8, minHeight: 24 }}>
+          <View
+            style={{
+              flexDirection: "row",
+              alignItems: "center",
+              gap: 8,
+              minHeight: 26,
+              borderBottomWidth: index === agents.length - 1 && !open ? 0 : 1,
+              borderBottomColor: theme.colors.border,
+            }}
+          >
             <SwatchDot swatch={agentSwatch(theme, order, agent.agent)} />
             <Text
               numberOfLines={1}
-              style={{ flexShrink: 1, fontSize: FONT.body, color: theme.colors.foreground }}
+              style={[MONO_TEXT, { flexShrink: 1, fontSize: FONT.body, color: theme.colors.foreground }]}
             >
               {agentLabel(agent.agent)}
             </Text>
-            <Text style={{ fontSize: FONT.caption, color: theme.colors.foregroundMuted }}>
+            <Text style={[MONO_TEXT, { fontSize: FONT.caption, color: theme.colors.foregroundMuted }]}>
               {formatPercent(share)}
             </Text>
             <View style={{ flex: 1 }} />
-            <Text
-              style={{
-                fontSize: FONT.body,
-                color: theme.colors.foreground,
-                fontVariant: ["tabular-nums"],
-              }}
-            >
+            <Text style={[MONO_TEXT, { fontSize: FONT.body, color: theme.colors.foreground }]}>
               {formatTokens(agent.usage.totalTokens)}
             </Text>
             <Text
-              style={{
-                width: 52,
-                textAlign: "right",
-                fontSize: FONT.body,
-                color: theme.colors.foregroundMuted,
-                fontVariant: ["tabular-nums"],
-              }}
+              style={[
+                MONO_TEXT,
+                {
+                  width: 56,
+                  textAlign: "right",
+                  fontSize: FONT.body,
+                  color: theme.colors.foregroundMuted,
+                },
+              ]}
             >
               {formatCost(agent.usage.cost)}
             </Text>
             {expandable ? (
               <Icon
                 name={open ? "ChevronUp" : "ChevronDown"}
-                size={14}
+                size={13}
                 color={theme.colors.foregroundMuted}
               />
             ) : null}
@@ -286,12 +302,12 @@ export function AgentList({
               <Pressable
                 accessibilityRole="button"
                 accessibilityState={{ expanded: open }}
-                accessibilityLabel={`${agentLabel(agent.agent)}: ${formatTokens(agent.usage.totalTokens)} tokens, ${formatCost(agent.usage.cost)}`}
+                accessibilityLabel={`${agentLabel(agent.agent)}：${formatTokens(agent.usage.totalTokens)} tokens，${formatCost(agent.usage.cost)}`}
                 onPress={() => setExpanded(open ? null : agent.agent)}
                 style={({ hovered }: HoverState) => ({
                   marginHorizontal: -6,
                   paddingHorizontal: 6,
-                  borderRadius: 6,
+                  borderRadius: 2,
                   backgroundColor: hovered ? theme.colors.surface2 : undefined,
                 })}
               >

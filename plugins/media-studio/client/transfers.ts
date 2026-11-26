@@ -306,7 +306,7 @@ export function matchesPending(file: WebFile, pending: PendingUpload): boolean {
 
 /** Continues an unfinished upload with the file the user picked again; sends only what is missing. */
 export function resumePending(pending: PendingUpload, file: WebFile): Promise<string[]> {
-  if (!matchesPending(file, pending)) throw new Error(`Pick the same file: ${pending.name}`);
+  if (!matchesPending(file, pending)) throw new Error(`请选择同一个文件续传：${pending.name}`);
   return uploadFiles([file], pending.dir);
 }
 
