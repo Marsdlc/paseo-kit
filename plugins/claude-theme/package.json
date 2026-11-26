@@ -1,0 +1,28 @@
+{
+  "name": "claude-theme",
+  "private": true,
+  "version": "1.0.0",
+  "description": "参考 Claude 桌面端的暖色纸感主题，提供亮色、暗色与跟随系统三种外观",
+  "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Marsdlc/paseo-kit.git",
+    "directory": "plugins/claude-theme"
+  },
+  "files": [
+    "paseo-plugin.json",
+    "OVERVIEW.md",
+    "index.client.ts",
+    "client/"
+  ],
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@getpaseo/plugin": "0.17.4",
+    "@types/react": "~19.2.0",
+    "react": "19.1.0",
+    "react-native": "0.81.5",
+    "typescript": "^5.9.3"
+  }
+}

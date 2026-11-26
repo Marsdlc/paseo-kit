@@ -1,7 +1,7 @@
 {
   "name": "paseo-kit",
   "private": true,
-  "description": "Paseo plugin: ccusage-stats (terminal-style Chinese Token usage and cost dashboard).",
+  "description": "Paseo plugins: ccusage-stats (terminal-style Chinese Token usage and cost dashboard) and claude-theme (Claude desktop style light/dark/auto themes).",
   "license": "Apache-2.0",
   "repository": {
     "type": "git",

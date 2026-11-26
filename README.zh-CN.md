@@ -4,9 +4,9 @@
 
 [![License: Apache-2.0](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](LICENSE)
 
-面向 [Paseo](https://paseo.sh) 的终端风格汉化插件仓库，仅保留 [`ccusage-stats`](plugins/ccusage-stats)（Token 用量统计）。
+面向 [Paseo](https://paseo.sh) 的汉化插件仓库，包含 [`ccusage-stats`](plugins/ccusage-stats)（Token 用量统计）与 [`claude-theme`](plugins/claude-theme)（Claude 主题）。
 
-## 插件功能
+## ccusage-stats 功能
 
 - **终端 / TUI 视觉风格**：全量汉化界面、等宽数字对齐、1px 锐利直角边框与终端提示符标题栏，自动适配 Paseo 明暗主题及移动端紧凑布局。
 - **侧边栏底栏**：一行展示今日 Token 总量、对比典型日（近 28 天活跃日中位数）的进度仪表以及估算费用。
@@ -20,7 +20,14 @@
   - Gemini CLI：`#8E75FF`（蓝紫）
 - **完全离线统计**：内置 `ccusage`（`20.1.2`）直接读取本机日志并按内置 API 标价估算，不向外发送任何数据。
 
-## 环境要求
+## claude-theme 功能
+
+- **Claude 亮色**：象牙白画布 `#FAF9F5`、纯白卡片、浅沙色侧边栏、陶土橙强调色 `#C96442`。
+- **Claude 暗色**：偏棕的暖炭灰 `#262624`、更深一档的侧边栏、陶土橙强调色 `#D97757`。
+- **Claude 跟随系统**：随系统浅色 / 深色模式自动切换上述两套配色。
+- 纯客户端主题，无后台进程，要求 Paseo **0.16.0** 及以上。安装后在 **Settings → Appearance** 中选择。
+
+## 环境要求（ccusage-stats）
 
 - Paseo **0.11.1** 及以上（daemon 与 app）。
 - daemon 已开启插件（**Settings → Plugins → Enable plugins**）。
@@ -32,12 +39,14 @@
 
 ```bash
 paseo plugin install github:Marsdlc/paseo-kit:plugins/ccusage-stats
+paseo plugin install github:Marsdlc/paseo-kit:plugins/claude-theme
 ```
 
 后续更新：
 
 ```bash
 paseo plugin update ccusage-stats
+paseo plugin update claude-theme
 ```
 
 ### 从本地克隆安装
@@ -47,6 +56,7 @@ git clone https://github.com/Marsdlc/paseo-kit.git
 cd paseo-kit
 npm run install:all
 paseo plugin install "$PWD/plugins/ccusage-stats"
+paseo plugin install "$PWD/plugins/claude-theme"
 paseo plugin ls
 ```
 
@@ -54,7 +64,7 @@ paseo plugin ls
 
 ```bash
 npm run typecheck
-paseo plugin reload ccusage-stats
+paseo plugin reload ccusage-stats   # 或 claude-theme
 paseo plugin ls
 paseo plugin logs ccusage-stats
 ```

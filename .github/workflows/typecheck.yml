@@ -11,7 +11,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        plugin: [ccusage-stats]
+        plugin: [ccusage-stats, claude-theme]
     defaults:
       run:
         working-directory: plugins/${{ matrix.plugin }}
