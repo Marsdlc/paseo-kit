@@ -103,12 +103,23 @@ export interface Swatch {
 }
 
 /**
- * Agent identity colors. The theme offers one accent and neutrals; the status colors mean
- * health, not identity, so agents get accent and muted steps instead. The order comes from the
- * report (heaviest agent across all history first), so an agent keeps its color across every view, and
- * every swatch sits next to a text label.
+ * Brand accent colors for major AI providers so each family reads at a glance across charts,
+ * legends, session rows and the sidebar pace bar.
+ */
+const AGENT_BRAND_COLORS: Readonly<Record<string, string>> = {
+  claude: "#D97757", // Anthropic Claude 陶土橘
+  codex: "#10A37F", // OpenAI Codex 翡翠绿
+  antigravity: "#4285F4", // Google Antigravity 科技蓝
+  gemini: "#8E75FF", // Google Gemini 蓝紫
+};
+
+/**
+ * Agent identity colors. Known AI families use their signature brand colors; any other agents fall
+ * back to the theme's accent and neutral steps in report order.
  */
 export function agentSwatch(theme: PluginTheme, agents: readonly string[], agent: string): Swatch {
+  const brand = AGENT_BRAND_COLORS[agent];
+  if (brand) return { color: brand, opacity: 1 };
   const steps: Swatch[] = [
     { color: theme.colors.accent, opacity: 1 },
     { color: theme.colors.accent, opacity: 0.5 },

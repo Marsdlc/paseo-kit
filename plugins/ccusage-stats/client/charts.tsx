@@ -281,7 +281,7 @@ export function PeriodBars({
                     gap: barHeight > segments.length * 4 ? 1 : 0,
                     borderRadius: 0,
                     overflow: "hidden",
-                    opacity: isSelected ? 1 : 0.48,
+                    opacity: isSelected ? 1 : 0.55,
                   }}
                 >
                   {segments.map((segment) => (
