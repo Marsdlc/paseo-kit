@@ -102,16 +102,46 @@ export interface Swatch {
   opacity: number;
 }
 
+interface BrandColor {
+  readonly dark: string;
+  readonly light: string;
+}
+
 /**
  * Brand accent colors for major AI providers so each family reads at a glance across charts,
  * legends, session rows and the sidebar pace bar.
  */
-const AGENT_BRAND_COLORS: Readonly<Record<string, string>> = {
+const AGENT_BRAND_COLORS: Readonly<Record<string, string | BrandColor>> = {
   claude: "#D97757", // Anthropic Claude 陶土橘
-  codex: "#10A37F", // OpenAI Codex 翡翠绿
+  codex: { dark: "#9CA3AF", light: "#525866" }, // OpenAI Codex 中性银灰（暗色）/ 深石墨（亮色）
   antigravity: "#4285F4", // Google Antigravity 科技蓝
   gemini: "#8E75FF", // Google Gemini 蓝紫
 };
+
+function isLightColor(color: string): boolean {
+  const value = color.trim();
+  let r: number;
+  let g: number;
+  let b: number;
+  if (/^#[\da-f]{6}([\da-f]{2})?$/i.test(value)) {
+    r = Number.parseInt(value.slice(1, 3), 16);
+    g = Number.parseInt(value.slice(3, 5), 16);
+    b = Number.parseInt(value.slice(5, 7), 16);
+  } else if (/^#[\da-f]{3,4}$/i.test(value)) {
+    r = Number.parseInt(value[1]! + value[1]!, 16);
+    g = Number.parseInt(value[2]! + value[2]!, 16);
+    b = Number.parseInt(value[3]! + value[3]!, 16);
+  } else {
+    const match = /^rgba?\(\s*(\d+(?:\.\d+)?)\s*,\s*(\d+(?:\.\d+)?)\s*,\s*(\d+(?:\.\d+)?)/i.exec(
+      value,
+    );
+    if (!match) return false;
+    r = Number(match[1]);
+    g = Number(match[2]);
+    b = Number(match[3]);
+  }
+  return (0.299 * r + 0.587 * g + 0.114 * b) / 255 > 0.5;
+}
 
 /**
  * Agent identity colors. Known AI families use their signature brand colors; any other agents fall
@@ -119,7 +149,15 @@ const AGENT_BRAND_COLORS: Readonly<Record<string, string>> = {
  */
 export function agentSwatch(theme: PluginTheme, agents: readonly string[], agent: string): Swatch {
   const brand = AGENT_BRAND_COLORS[agent];
-  if (brand) return { color: brand, opacity: 1 };
+  if (brand) {
+    const color =
+      typeof brand === "string"
+        ? brand
+        : isLightColor(theme.colors.surface0)
+          ? brand.light
+          : brand.dark;
+    return { color, opacity: 1 };
+  }
   const steps: Swatch[] = [
     { color: theme.colors.accent, opacity: 1 },
     { color: theme.colors.accent, opacity: 0.5 },
