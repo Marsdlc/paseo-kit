@@ -15,6 +15,7 @@ import {
   type RawReport,
   type RawRow,
 } from "./ccusage";
+import type { ThroughputReader } from "./throughput";
 
 export type UsageReport = RpcOutput<typeof usageReportRpc>;
 
@@ -139,8 +140,17 @@ function agentOrder(raw: RawReport): string[] {
     .map(([agent]) => agent);
 }
 
-function buildReport(raw: RawReport, timezone: string, today: string): UsageReport {
-  const sessions = raw.session.map(sessionOf);
+async function buildReport(
+  raw: RawReport,
+  sessions: SessionUsage[],
+  timezone: string,
+  today: string,
+  throughput: ThroughputReader,
+): Promise<UsageReport> {
+  const recent = [...sessions]
+    .sort((a, b) => (b.lastActivity ?? "").localeCompare(a.lastActivity ?? ""))
+    .slice(0, RECENT_SESSIONS);
+  const speeds = await Promise.all(recent.map((session) => throughput.outputSpeed(session)));
   return {
     generatedAt: Date.now(),
     today,
@@ -149,9 +159,10 @@ function buildReport(raw: RawReport, timezone: string, today: string): UsageRepo
     daily: series("daily", raw.daily, today),
     weekly: series("weekly", raw.weekly, today),
     monthly: series("monthly", raw.monthly, today),
-    recentSessions: [...sessions]
-      .sort((a, b) => (b.lastActivity ?? "").localeCompare(a.lastActivity ?? ""))
-      .slice(0, RECENT_SESSIONS),
+    recentSessions: recent.map((session, index) => ({
+      ...session,
+      outputSpeed: speeds[index] ?? null,
+    })),
     refreshError: null,
   };
 }
@@ -172,7 +183,7 @@ export interface ReportCache {
   stop(): void;
 }
 
-export function createReportCache(): ReportCache {
+export function createReportCache(throughput: ThroughputReader): ReportCache {
   const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC";
   const lifetime = new AbortController();
   let snapshot: Snapshot | null = null;
@@ -192,9 +203,10 @@ export function createReportCache(): ReportCache {
       try {
         const today = localToday(timezone);
         const raw = await runCcusage(timezone, lifetime.signal);
+        const sessions = raw.session.map(sessionOf);
         const next = {
-          report: buildReport(raw, timezone, today),
-          sessions: raw.session.map(sessionOf),
+          report: await buildReport(raw, sessions, timezone, today, throughput),
+          sessions,
         };
         snapshot = next;
         fetchedAt = startedAt;

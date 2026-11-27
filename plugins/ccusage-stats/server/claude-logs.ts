@@ -129,6 +129,9 @@ export function createClaudeLogs() {
   }
 
   return {
+    /** The main log of a Claude Code session, if it is on this machine. */
+    file: sessionFile,
+
     /** The session followed by the sessions it was resumed or forked from, newest first. */
     async chain(sessionId: string): Promise<string[]> {
       const chain = [sessionId];

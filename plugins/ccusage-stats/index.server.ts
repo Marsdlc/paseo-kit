@@ -5,6 +5,7 @@ import { createClaudeLogs } from "./server/claude-logs";
 import { createReportCache } from "./server/report";
 import { createSessionMatcher } from "./server/sessions";
 import { createSubagentPricer } from "./server/subagents";
+import { createThroughputReader } from "./server/throughput";
 import { sessionDetailRpc, sessionUsageRpc, usageReportRpc } from "./shared/usage";
 
 // The plugin process validates every daemon message with one generated function of about 11 MB
@@ -16,9 +17,10 @@ import { sessionDetailRpc, sessionUsageRpc, usageReportRpc } from "./shared/usag
 v8.setFlagsFromString("--no-maglev");
 
 export default function contribute(server: PluginServerContext) {
-  const cache = createReportCache();
+  const logs = createClaudeLogs();
+  const cache = createReportCache(createThroughputReader(logs));
   const pricer = createSubagentPricer(cache.timezone);
-  const matcher = createSessionMatcher(cache, createClaudeLogs(), pricer, createAgentStore());
+  const matcher = createSessionMatcher(cache, logs, pricer, createAgentStore());
   server.handle(usageReportRpc, () => cache.read());
   server.handle(sessionUsageRpc, (input, { paseo }) => matcher.resolve(input, paseo));
   server.handle(sessionDetailRpc, (input, { paseo }) => matcher.detail(input, paseo));

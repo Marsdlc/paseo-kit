@@ -27,6 +27,12 @@ export function formatCost(cost: number): string {
   return `$${(value / 1000).toFixed(1)}K`;
 }
 
+/** Output speed: "8.4 t/s", "52 t/s". */
+export function formatSpeed(tokensPerSecond: number): string {
+  const value = Math.max(tokensPerSecond, 0);
+  return `${value < 9.95 ? value.toFixed(1) : Math.round(value)} t/s`;
+}
+
 export function formatPercent(fraction: number): string {
   const percent = fraction * 100;
   if (percent > 0 && percent < 1) return "<1%";

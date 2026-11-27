@@ -3,7 +3,7 @@ import type { PluginScreenProps } from "@getpaseo/plugin/client";
 import { Icon } from "@getpaseo/plugin/client/react-native";
 import { useState, type ReactNode } from "react";
 import { Pressable, ScrollView, Text, View, type PressableStateCallbackType } from "react-native";
-import type { PeriodKind, SessionUsage, UsagePeriod } from "../shared/usage";
+import type { PeriodKind, RecentSession, UsagePeriod } from "../shared/usage";
 import { Legend, PERIOD_OPTIONS, PeriodBars, Segmented, SwatchDot } from "./charts";
 import { agentSwatch, useUsageReport, type UsageReport } from "./data";
 import {
@@ -11,6 +11,7 @@ import {
   CURRENT_LABEL,
   formatAgo,
   formatCost,
+  formatSpeed,
   formatPercent,
   formatPeriodLong,
   formatTokens,
@@ -171,7 +172,7 @@ function SessionRow({
 }: {
   theme: PluginTheme;
   order: readonly string[];
-  session: SessionUsage;
+  session: RecentSession;
   last: boolean;
 }) {
   const topModel = session.models[0]?.model;
@@ -205,6 +206,19 @@ function SessionRow({
             .join(" | ")}
         </Text>
       </View>
+      <Text
+        style={[
+          MONO_TEXT,
+          {
+            width: 64,
+            textAlign: "right",
+            fontSize: FONT.caption,
+            color: theme.colors.foregroundMuted,
+          },
+        ]}
+      >
+        {session.outputSpeed === null ? "--" : formatSpeed(session.outputSpeed)}
+      </Text>
       <Text style={[MONO_TEXT, { fontSize: FONT.body, color: theme.colors.foreground }]}>
         {formatTokens(session.usage.totalTokens)}
       </Text>
@@ -353,7 +367,15 @@ function Body({
         </>
       ) : null}
 
-      <Card theme={theme} title="最近会话">
+      <Card
+        theme={theme}
+        title="最近会话"
+        trailing={
+          <Text style={[MONO_TEXT, { fontSize: FONT.caption, color: theme.colors.foregroundMuted }]}>
+            平均输出速度 · Token · 费用
+          </Text>
+        }
+      >
         {report.recentSessions.length === 0 ? (
           <Text style={[MONO_TEXT, { fontSize: FONT.body, color: theme.colors.foregroundMuted }]}>
             暂无会话记录。

@@ -34,6 +34,11 @@ const sessionSchema = z.object({
   lastActivity: z.string().nullable(),
 });
 
+const recentSessionSchema = sessionSchema.extend({
+  /** Average output tokens per second of model time, from log timestamps; null without timing. */
+  outputSpeed: z.number().nullable(),
+});
+
 export const usageReportRpc = defineRpc({
   name: "usage.report",
   input: z.object({}),
@@ -49,7 +54,7 @@ export const usageReportRpc = defineRpc({
     daily: z.array(periodSchema),
     weekly: z.array(periodSchema),
     monthly: z.array(periodSchema),
-    recentSessions: z.array(sessionSchema),
+    recentSessions: z.array(recentSessionSchema),
     /** Set when the latest refresh failed and an older report is served instead. */
     refreshError: z.string().nullable(),
   }),
@@ -118,6 +123,7 @@ export type ModelUsage = z.infer<typeof modelUsageSchema>;
 export type AgentUsage = z.infer<typeof agentUsageSchema>;
 export type UsagePeriod = z.infer<typeof periodSchema>;
 export type SessionUsage = z.infer<typeof sessionSchema>;
+export type RecentSession = z.infer<typeof recentSessionSchema>;
 export type SessionMatch = z.infer<typeof sessionMatchSchema>;
 export type SubagentUsage = z.infer<typeof subagentSchema>;
 export type ChildAgentUsage = z.infer<typeof childAgentSchema>;

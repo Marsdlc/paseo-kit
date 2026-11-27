@@ -18,7 +18,7 @@ A Chinese [Paseo](https://paseo.sh) plugin repository containing `ccusage-stats`
 
 - Sidebar footer line with today's tokens, a pace bar comparing today's estimated cost against your typical day (28-day active median), and estimated cost.
 - Popover with day / week / month totals, period-over-period change, and stacked bar charts.
-- Full **Token 用量** screen (also in Command Center): 30 days / 12 weeks / 12 months history, cost per million tokens, cache hit rate, input/output/cache composition, expandable per-agent and per-model breakdown, and recent sessions.
+- Full **Token 用量** screen (also in Command Center): 30 days / 12 weeks / 12 months history, cost per million tokens, cache hit rate, input/output/cache composition, expandable per-agent and per-model breakdown, and recent sessions with their average output speed (tokens/s).
 - Per-agent composer pill and **会话用量** panel covering main conversation, subagents, Paseo child agents, and model tables.
 - Signature brand colors for Claude Code (`#D97757`), Codex (`#10A37F`), Antigravity (`#4285F4`), and Gemini CLI (`#8E75FF`).
 - Powered by bundled `ccusage` (`20.1.2`), reading local session logs offline with nothing sent off the host.
